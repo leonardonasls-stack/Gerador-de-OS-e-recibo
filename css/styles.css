@@ -1,0 +1,535 @@
+/* === ESTILOS DA INTERFACE (APP) === */
+        :root {
+            --primary: #1a5276;
+            --bg-color: #f0f2f5;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg-color);
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .sidebar {
+            width: 400px;
+            background: #fff;
+            padding: 20px;
+            overflow-y: auto;
+            box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+            border-right: 1px solid #ddd;
+        }
+
+        .preview-area {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+        }
+
+        h2 {
+            color: var(--primary);
+            font-size: 18px;
+            margin-bottom: 15px;
+            border-bottom: 2px solid var(--primary);
+            padding-bottom: 5px;
+            margin-top: 25px;
+        }
+
+        h2:first-of-type {
+            margin-top: 0;
+        }
+
+        .form-group {
+            margin-bottom: 12px;
+        }
+
+        label {
+            display: block;
+            font-size: 12px;
+            font-weight: bold;
+            margin-bottom: 4px;
+            color: #555;
+        }
+
+        input,
+        select,
+        textarea {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 13px;
+            box-sizing: border-box;
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .row {
+            display: flex;
+            gap: 10px;
+        }
+
+        .row>div {
+            flex: 1;
+        }
+
+        button.btn-primary {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 12px;
+            width: 100%;
+            border-radius: 4px;
+            font-size: 15px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-bottom: 25px;
+            transition: 0.2s;
+        }
+
+        button.btn-primary:hover {
+            background-color: #123c57;
+        }
+
+        button.btn-secondary {
+            background-color: #28b463;
+            color: white;
+            border: none;
+            padding: 8px;
+            font-size: 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-bottom: 10px;
+            width: 100%;
+        }
+
+        .item-row {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 5px;
+            align-items: center;
+        }
+
+        .item-row input {
+            padding: 6px;
+        }
+
+        .btn-remove {
+            background: #e74c3c;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            padding: 6px 10px;
+        }
+
+        /* === ESTILOS DO DOCUMENTO A4 (ORÇAMENTO) === */
+        .a4-page {
+            width: 210mm;
+            min-height: 297mm;
+            background: white;
+            padding: 15mm;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+            box-sizing: border-box;
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            color: #333;
+        }
+
+        .os-header {
+            text-align: center;
+            margin-bottom: 20px;
+            border-bottom: 3px solid #1a5276;
+            padding-bottom: 15px;
+        }
+
+        .os-header h1 {
+            margin: 0;
+            font-size: 26px;
+            color: #1a5276;
+        }
+
+        .os-header p {
+            margin: 3px 0;
+            font-size: 11px;
+            color: #555;
+        }
+
+        .os-title-section {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 15px 0;
+            background-color: #f8f9fa;
+            border: 1px solid #e9ecef;
+            padding: 10px;
+        }
+
+        .os-title-left {
+            font-size: 18px;
+            font-weight: bold;
+            color: #1a5276;
+        }
+
+        .os-title-right {
+            text-align: right;
+            font-size: 13px;
+            font-weight: bold;
+        }
+
+        .os-section {
+            margin-bottom: 20px;
+        }
+
+        .os-section-title {
+            background-color: #e9ecef;
+            padding: 6px 12px;
+            font-size: 13px;
+            font-weight: bold;
+            border-left: 4px solid #1a5276;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+        }
+
+        .os-info-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+        }
+
+        .os-info-table th,
+        .os-info-table td {
+            padding: 6px 4px;
+            text-align: left;
+            vertical-align: top;
+            border-bottom: 1px solid #f1f1f1;
+        }
+
+        .os-info-table th {
+            width: 130px;
+            font-weight: bold;
+            color: #444;
+        }
+
+        .os-text-block {
+            font-size: 12px;
+            margin: 8px 0;
+            padding: 0 4px;
+        }
+
+        .os-items-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+            font-size: 12px;
+        }
+
+        .os-items-table th,
+        .os-items-table td {
+            border: 1px solid #dee2e6;
+            padding: 8px;
+            text-align: left;
+        }
+
+        .os-items-table th {
+            background-color: #1a5276;
+            color: white;
+            font-weight: bold;
+            text-align: center;
+        }
+
+        .os-items-table td.right {
+            text-align: right;
+        }
+
+        .os-items-table td.center {
+            text-align: center;
+        }
+
+        .os-totals {
+            display: flex;
+            justify-content: flex-end;
+            margin-top: 15px;
+        }
+
+        .os-totals table {
+            width: 250px;
+            border-collapse: collapse;
+            font-size: 13px;
+            text-align: right;
+        }
+
+        .os-totals td {
+            padding: 5px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .os-grand-total {
+            font-size: 16px;
+            font-weight: bold;
+            color: #1a5276;
+            background-color: #f8f9fa;
+        }
+
+        .os-footer {
+            margin-top: 30px;
+            font-size: 11px;
+            color: #555;
+            text-align: justify;
+            line-height: 1.4;
+        }
+
+        .os-footer ol {
+            padding-left: 20px;
+            margin-top: 5px;
+        }
+
+        .os-signatures {
+            width: 100%;
+            margin-top: 40px;
+            text-align: center;
+            border-collapse: collapse;
+        }
+
+        .os-signatures td {
+            width: 50%;
+            padding: 10px;
+            vertical-align: bottom;
+        }
+
+        .os-sig-line {
+            border-top: 1px solid #333;
+            margin: 0 30px;
+            padding-top: 8px;
+            font-size: 13px;
+            font-weight: bold;
+        }
+
+        .os-sig-sub {
+            font-size: 11px;
+            font-weight: normal;
+            color: #666;
+        }
+
+        .os-disclaimer {
+            text-align: center;
+            font-size: 10px;
+            color: #999;
+            margin-top: 25px;
+            border-top: 1px dashed #ccc;
+            padding-top: 10px;
+        }
+
+        /* === RESPONSIVIDADE (MOBILE) === */
+        @media screen and (max-width: 768px) {
+            body {
+                flex-direction: column;
+                height: auto;
+                overflow-y: auto;
+            }
+
+            .sidebar {
+                width: 100%;
+                height: auto;
+                overflow-y: visible;
+                border-right: none;
+                border-bottom: 3px solid var(--primary);
+                padding: 15px;
+            }
+
+            .row {
+                flex-direction: column;
+                gap: 0;
+            }
+
+            .item-row {
+                flex-wrap: wrap;
+                background: #fafafa;
+                padding: 10px;
+                border: 1px solid #ddd;
+                border-radius: 4px;
+                margin-bottom: 10px;
+            }
+
+            .item-row input {
+                flex: 1 1 100% !important;
+                /* Força inputs ocuparem a linha toda no mobile */
+                margin-bottom: 5px;
+            }
+
+            .item-row .btn-remove {
+                width: 100%;
+                padding: 10px;
+                margin-top: 5px;
+            }
+
+            .preview-area {
+                width: 100%;
+                padding: 10px;
+                display: block;
+                overflow-x: auto;
+                /* Permite rolar a folha pro lado sem espremer o conteúdo */
+                -webkit-overflow-scrolling: touch;
+            }
+
+            .a4-page {
+                min-width: 210mm;
+                /* Segura o tamanho original para não quebrar tabelas */
+                margin: 0;
+            }
+        }
+
+        /* === CONFIGURAÇÕES DE IMPRESSÃO === */
+        @media print {
+            body {
+                background: white;
+                display: block;
+                height: auto;
+                overflow: visible;
+            }
+
+            .sidebar {
+                display: none;
+            }
+
+            .preview-area {
+                padding: 0;
+                display: block;
+                overflow: visible;
+            }
+
+            .a4-page {
+                box-shadow: none;
+                margin: 0;
+                width: 100%;
+                min-width: auto;
+                height: auto;
+                padding: 0;
+            }
+
+            @page {
+                size: A4;
+                margin: 15mm;
+            }
+        }
+
+        /* === CLASSES UTILITÁRIAS (SUBSTITUINDO INLINE STYLES) === */
+        .mt-15 {
+            margin-top: 15px;
+        }
+
+        .w-8 {
+            width: 8%;
+        }
+
+        .w-52 {
+            width: 52%;
+        }
+
+        .w-10 {
+            width: 10%;
+        }
+
+        .w-15 {
+            width: 15%;
+        }
+
+        .text-left {
+            text-align: left;
+        }
+
+        .flex-3 {
+            flex: 3;
+        }
+
+        .flex-1 {
+            flex: 1;
+        }
+
+
+        .os-header-new {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 25px;
+        }
+
+        .os-header-left h1 {
+            margin: 0 0 10px 0;
+            font-size: 24px;
+            color: #1a5276;
+        }
+
+        .os-header-left p {
+            margin: 3px 0;
+            font-size: 12px;
+            color: #333;
+        }
+
+        .os-header-right {
+            text-align: right;
+        }
+
+        .os-header-right h2 {
+            margin: 0 0 5px 0;
+            font-size: 28px;
+            color: #2c3e50;
+            border: none;
+            padding: 0;
+            text-transform: uppercase;
+        }
+
+        .os-header-right p {
+            margin: 2px 0;
+            font-size: 12px;
+            color: #7f8c8d;
+            font-weight: bold;
+        }
+
+        .client-box {
+            border: 1px solid #e2e8f0;
+            border-left: 6px solid #1a5276;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 4px;
+            background-color: #fcfcfc;
+        }
+
+        .client-title {
+            font-size: 16px;
+            font-weight: bold;
+            color: #1a5276;
+            margin-bottom: 12px;
+        }
+
+        .client-info-line {
+            font-size: 12px;
+            margin-bottom: 6px;
+            color: #333;
+        }
+
+        button.btn-install {
+            background-color: #f39c12;
+            color: white;
+            border: none;
+            padding: 12px;
+            width: 100%;
+            border-radius: 4px;
+            font-size: 15px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-bottom: 15px;
+            transition: 0.2s;
+        }
+
+        button.btn-install:hover {
+            background-color: #d68910;
+        }

@@ -1,0 +1,434 @@
+Directory structure:
+└── Gerador de OS/
+    ├── index.html
+    ├── manifest.json
+    ├── sw.js
+    ├── css/
+    │   └── styles.css
+    └── js/
+        └── app.js
+
+================================================
+FILE: index.html
+================================================
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gerador de Ordem de Serviço</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#1a5276">
+    <link rel="icon" type="image/png" href="assets/icon-192.png">
+</head>
+
+<body>
+
+    <!-- BARRA LATERAL: FORMULÁRIO -->
+    <div class="sidebar">
+        <button type="button" class="btn-primary" onclick="window.print()">🖨️ Imprimir / Salvar PDF</button>
+        <button type="button" id="btn-install" class="btn-install">📱 Instalar
+            Aplicativo</button>
+
+        <h2>0. Dados da Empresa</h2>
+        <div class="form-group"><label for="in-emp-nome">Nome da Empresa</label><input type="text" id="in-emp-nome"
+                value="LLSystem - Soluções Tecnológicas" onkeyup="updateField('emp-nome')"></div>
+        <div class="row">
+            <div class="form-group"><label for="in-emp-cnpj">CNPJ / CPF</label><input type="text" id="in-emp-cnpj"
+                    value="" placeholder="00.000.000/0000-00" onkeyup="updateField('emp-cnpj')"></div>
+            <div class="form-group"><label for="in-emp-tel">Telefone / WhatsApp</label><input type="text"
+                    id="in-emp-tel" value="" placeholder="(00) 00000-0000" onkeyup="updateField('emp-tel')"></div>
+        </div>
+        <div class="form-group"><label for="in-emp-email">E-mail</label><input type="text" id="in-emp-email" value=""
+                placeholder="contato@empresa.com" onkeyup="updateField('emp-email')"></div>
+        <div class="form-group"><label for="in-emp-end">Endereço Completo</label><input type="text" id="in-emp-end"
+                value="Maceió/AL" onkeyup="updateField('emp-end')"></div>
+
+        <h2>1. Dados da OS</h2>
+        <div class="row">
+            <div class="form-group"><label for="in-os">Nº da OS</label><input type="text" id="in-os" value="0024/2026"
+                    onkeyup="updateField('os')"></div>
+            <div class="form-group"><label for="in-data">Data</label><input type="text" id="in-data"
+                    value="23 de agosto de 2026" onkeyup="updateField('data')"></div>
+        </div>
+
+        <h2>2. Cliente</h2>
+        <div class="form-group"><label for="in-cliente-nome">Nome / Razão Social</label><input type="text"
+                id="in-cliente-nome" placeholder="Nome do cliente" onkeyup="updateField('cliente-nome')"></div>
+        <div class="form-group"><label for="in-cliente-doc">CPF / CNPJ</label><input type="text" id="in-cliente-doc"
+                placeholder="000.000.000-00" onkeyup="updateField('cliente-doc')"></div>
+        <div class="form-group"><label for="in-cliente-end">Endereço Completo</label><input type="text"
+                id="in-cliente-end" onkeyup="updateField('cliente-end')"></div>
+        <div class="form-group"><label for="in-cliente-contato">Contato (Telefone/Email)</label><input type="text"
+                id="in-cliente-contato" onkeyup="updateField('cliente-contato')"></div>
+
+        <h2>3. Detalhes do Serviço</h2>
+        <div class="form-group"><label for="in-servico">Descrição do Serviço Realizado</label><textarea id="in-servico"
+                placeholder="Descreva o serviço executado de forma clara..."
+                onkeyup="updateField('servico')"></textarea></div>
+
+        <h2>4. Serviços e Peças (Itens)</h2>
+        <div id="items-container">
+            <!-- Linhas de itens geradas por JS -->
+        </div>
+        <button type="button" class="btn-secondary" onclick="addItem()">+ Adicionar Item</button>
+
+        <div class="row mt-15">
+            <div class="form-group"><label for="in-desconto">Desconto (R$)</label><input type="number" id="in-desconto"
+                    value="0.00" step="0.01" onkeyup="calculateTotals()" onchange="calculateTotals()"></div>
+        </div>
+
+        <h2>5. Assinaturas</h2>
+        <div class="form-group"><label for="in-tecnico">Nome do Técnico</label><input type="text" id="in-tecnico"
+                value="Leonardo Nascimento" onkeyup="updateField('tecnico')"></div>
+    </div>
+
+    <!-- ÁREA DE PREVIEW: ORÇAMENTO A4 -->
+    <div class="preview-area">
+        <div class="a4-page">
+            <div class="os-header-new">
+                <div class="os-header-left">
+                    <h1 id="out-emp-nome">LLSystem - Soluções Tecnológicas</h1>
+                    <p><strong>CNPJ:</strong> <span id="out-emp-cnpj">-</span></p>
+                    <p><strong>Endereço:</strong> <span id="out-emp-end">Maceió/AL</span></p>
+                    <p><strong>Telefone / WhatsApp:</strong> <span id="out-emp-tel">-</span></p>
+                    <p><strong>E-mail:</strong> <span id="out-emp-email">-</span></p>
+                </div>
+                <div class="os-header-right">
+                    <h2>ORÇAMENTO</h2>
+                    <p>OS Nº: <span id="out-os">0024/2026</span></p>
+                    <p>Data: <span id="out-data">23 de agosto de 2026</span></p>
+                </div>
+            </div>
+
+            <div class="client-box">
+                <div class="client-title">Dados do Cliente</div>
+                <div class="client-info-line"><strong>Nome / Razão Social:</strong> <span id="out-cliente-nome"></span>
+                </div>
+                <div class="client-info-line"><strong>CPF / CNPJ:</strong> <span id="out-cliente-doc"></span></div>
+                <div class="client-info-line"><strong>Endereço:</strong> <span id="out-cliente-end"></span></div>
+                <div class="client-info-line"><strong>Contato:</strong> <span id="out-cliente-contato"></span></div>
+            </div>
+
+            <div class="os-section">
+                <div class="os-section-title">Detalhes do Serviço</div>
+                <div class="os-text-block"><strong>Serviço Realizado:</strong> <span id="out-servico"></span></div>
+            </div>
+
+            <div class="os-section">
+                <div class="os-section-title">Valores (Serviços e Peças)</div>
+                <table class="os-items-table">
+                    <thead>
+                        <tr>
+                            <th class="w-8">Item</th>
+                            <th class="w-52 text-left">Descrição (Serviço / Peça)</th>
+                            <th class="w-10">Qtd</th>
+                            <th class="w-15">V. Unit (R$)</th>
+                            <th class="w-15">V. Total (R$)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="out-items-body">
+                        <!-- Itens renderizados aqui -->
+                    </tbody>
+                </table>
+
+                <div class="os-totals">
+                    <table>
+                        <tbody>
+                            <tr>
+                                <td>Subtotal:</td>
+                                <td id="out-subtotal">R$ 0,00</td>
+                            </tr>
+                            <tr>
+                                <td>Desconto:</td>
+                                <td id="out-desconto">R$ 0,00</td>
+                            </tr>
+                            <tr class="os-grand-total">
+                                <td>Total Geral:</td>
+                                <td id="out-total">R$ 0,00</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="os-footer">
+                <div class="os-section-title">Termo de Garantia e Conclusão</div>
+                <ol>
+                    <li><strong>Garantia:</strong> O serviço acima especificado possui garantia de 90 dias a partir da
+                        data de entrega, cobrindo apenas defeitos de fabricação das peças substituídas ou falhas na mão
+                        de obra.</li>
+                    <li><strong>Aprovação:</strong> A assinatura abaixo atesta a ciência dos termos, o aceite dos
+                        valores e a verificação do serviço executado.</li>
+                </ol>
+            </div>
+
+            <table class="os-signatures">
+                <tbody>
+                    <tr>
+                        <td>
+                            <div class="os-sig-line">
+                                <span id="out-tecnico">Leonardo Nascimento</span><br>
+                                <span class="os-sig-sub" id="out-emp-assinatura">LLSystem - Soluções Tecnológicas</span>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="os-sig-line">
+                                <span id="out-cliente-assinatura">Cliente</span><br>
+                                <span class="os-sig-sub">Assinatura do Cliente</span>
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="os-disclaimer">
+                Documento de controle interno da prestação de serviços. Não possui validade como nota fiscal.
+            </div>
+        </div>
+    </div>
+
+    <!-- SCRIPT DE INTERAÇÃO -->
+    <script src="js/app.js" defer></script>
+</body>
+
+</html>
+
+
+================================================
+FILE: manifest.json
+================================================
+{
+  "name": "Gerador de Ordem de ServiÃ§o",
+  "short_name": "Gerador OS",
+  "description": "Aplicativo para gerar orÃ§amentos e OS",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#f0f2f5",
+  "theme_color": "#1a5276",
+  "icons": [
+    {
+      "src": "assets/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "assets/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
+
+
+================================================
+FILE: sw.js
+================================================
+const CACHE_NAME = 'os-cache-v4';
+const urlsToCache = [
+  './',
+  './index.html',
+  './css/styles.css',
+  './js/app.js',
+  './manifest.json',
+  './assets/icon-192.png',
+  './assets/icon-512.png',
+  './assets/icon.svg'
+];
+
+self.addEventListener('install', event => {
+  event.waitUntil(
+    caches.open(CACHE_NAME)
+      .then(cache => cache.addAll(urlsToCache))
+  );
+});
+
+self.addEventListener('fetch', event => {
+  event.respondWith(
+    caches.match(event.request)
+      .then(response => {
+        return response || fetch(event.request);
+      })
+  );
+});
+
+
+================================================
+FILE: css/styles.css
+================================================
+Error reading file with 'cp1252': 'charmap' codec can't decode byte 0x81 in position 10485: character maps to <undefined>
+
+
+================================================
+FILE: js/app.js
+================================================
+let items = [];
+
+        // Atualiza campos de texto simples
+        function updateField(fieldKey) {
+            const val = document.getElementById(`in-${fieldKey}`).value;
+            const outElement = document.getElementById(`out-${fieldKey}`);
+            if (outElement) {
+                outElement.innerText = val || (fieldKey === 'emp-nome' ? 'Nome da Empresa' : '-');
+            }
+
+            // Regras especiais para replicar os nomes nas assinaturas
+            if (fieldKey === 'cliente-nome') {
+                document.getElementById('out-cliente-assinatura').innerText = val || 'Cliente';
+            }
+            if (fieldKey === 'emp-nome') {
+                document.getElementById('out-emp-assinatura').innerText = val || 'Empresa';
+            }
+        }
+
+        // FormataÃ§Ã£o de Moeda
+        function formatMoney(value) {
+            return value.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
+
+        // Adiciona nova linha de item no formulÃ¡rio
+        function addItem() {
+            const id = Date.now();
+            items.push({ id, desc: '', qtd: 1, val: 0.00 });
+            renderFormItems();
+            renderPreviewItems();
+        }
+
+        // Remove linha
+        function removeItem(id) {
+            items = items.filter(i => i.id !== id);
+            renderFormItems();
+            renderPreviewItems();
+        }
+
+        // Atualiza dados do array quando edita o form
+        function updateItemData(id, field, value) {
+            const item = items.find(i => i.id === id);
+            if (item) {
+                item[field] = field === 'desc' ? value : parseFloat(value) || 0;
+                renderPreviewItems();
+            }
+        }
+
+        // Renderiza os inputs na lateral esquerda
+        function renderFormItems() {
+            const container = document.getElementById('items-container');
+            container.innerHTML = '';
+            items.forEach((item, index) => {
+                container.innerHTML += `
+                    <div class="item-row">
+                        <input type="text" placeholder="DescriÃ§Ã£o" class="flex-3" value="${item.desc}" onkeyup="updateItemData(${item.id}, 'desc', this.value)">
+                        <input type="number" placeholder="Qtd" class="flex-1" value="${item.qtd}" onkeyup="updateItemData(${item.id}, 'qtd', this.value)" onchange="updateItemData(${item.id}, 'qtd', this.value)">
+                        <input type="number" placeholder="R$" step="0.01" class="flex-1" value="${item.val}" onkeyup="updateItemData(${item.id}, 'val', this.value)" onchange="updateItemData(${item.id}, 'val', this.value)">
+                        <button type="button" class="btn-remove" onclick="removeItem(${item.id})">X</button>
+                    </div>
+                `;
+            });
+        }
+
+        // Renderiza as linhas na tabela do layout A4 e calcula os totais
+        function renderPreviewItems() {
+            const tbody = document.getElementById('out-items-body');
+            tbody.innerHTML = '';
+            let subtotal = 0;
+
+            items.forEach((item, index) => {
+                const totalItem = item.qtd * item.val;
+                subtotal += totalItem;
+                const num = String(index + 1).padStart(2, '0');
+
+                tbody.innerHTML += `
+                    <tr>
+                        <td class="center">${num}</td>
+                        <td>${item.desc || '-'}</td>
+                        <td class="center">${item.qtd}</td>
+                        <td class="right">${formatMoney(item.val)}</td>
+                        <td class="right">${formatMoney(totalItem)}</td>
+                    </tr>
+                `;
+            });
+
+            calculateTotals(subtotal);
+        }
+
+        // Calcula totais com desconto
+        function calculateTotals(calculatedSub = null) {
+            if (calculatedSub === null) {
+                calculatedSub = items.reduce((acc, item) => acc + (item.qtd * item.val), 0);
+            }
+
+            const descInput = parseFloat(document.getElementById('in-desconto').value) || 0;
+            const totalGeral = calculatedSub - descInput;
+
+            document.getElementById('out-subtotal').innerText = `R$ ${formatMoney(calculatedSub)}`;
+            document.getElementById('out-desconto').innerText = `R$ ${formatMoney(descInput)}`;
+            document.getElementById('out-total').innerText = `R$ ${formatMoney(totalGeral < 0 ? 0 : totalGeral)}`;
+        }
+
+        // Inicializar os campos para garantir que a assinatura espelhe o input inicial
+        updateField('emp-nome');
+
+        // Configura a data de hoje automaticamente
+        const today = new Date();
+        const options = { day: 'numeric', month: 'long', year: 'numeric' };
+        const dateStr = today.toLocaleDateString('pt-BR', options);
+        const inData = document.getElementById('in-data');
+        if (inData) {
+            inData.value = dateStr;
+            updateField('data');
+        }
+
+        // Configura nÃºmero aleatÃ³rio para a OS
+        const currentYear = today.getFullYear();
+        const randomOS = Math.floor(1000 + Math.random() * 9000); // Gera um nÃºmero de 4 dÃ­gitos
+        const osString = `${randomOS}/${currentYear}`;
+        const inOS = document.getElementById('in-os');
+        if (inOS) {
+            inOS.value = osString;
+            updateField('os');
+        }
+
+
+        // LÃ³gica de instalaÃ§Ã£o do PWA via BotÃ£o
+        let deferredPrompt;
+        const installBtn = document.getElementById('btn-install');
+
+        window.addEventListener('beforeinstallprompt', (e) => {
+            // Impede que o mini-infobar apareÃ§a no mobile automaticamente
+            e.preventDefault();
+            // Salva o evento para ser disparado depois
+            deferredPrompt = e;
+            // Mostra o botÃ£o de instalaÃ§Ã£o
+            installBtn.style.display = 'block';
+        });
+
+        installBtn.addEventListener('click', async () => {
+            if (deferredPrompt) {
+                // Mostra o prompt de instalaÃ§Ã£o
+                deferredPrompt.prompt();
+                // Espera a resposta do usuÃ¡rio
+                const { outcome } = await deferredPrompt.userChoice;
+                // Esconde o botÃ£o apÃ³s a escolha
+                // installBtn.style.display = 'none'; // Mantido visÃ­vel conforme solicitado
+                deferredPrompt = null;
+            } else {
+                alert('A instalaÃ§Ã£o nÃ£o estÃ¡ disponÃ­vel no momento.\n\nIsso geralmente acontece porque o arquivo foi aberto localmente (file://) sem HTTPS ou Servidor Local. Para instalar no celular, vocÃª precisa hospedar esses arquivos na internet.');
+            }
+        });
+
+        // Inicia com 1 item em branco
+        if (items.length === 0) addItem();
+
+        // Registra o Service Worker (PWA)
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                    .then(reg => console.log('PWA Service Worker registrado com sucesso!', reg))
+                    .catch(err => console.error('Erro ao registrar o Service Worker do PWA', err));
+            });
+        }
+
