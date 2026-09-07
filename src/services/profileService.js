@@ -21,12 +21,7 @@ export const getCompanyData = async (userId) => {
     .from('empresas')
     .select('*')
     .eq('user_id', userId)
-    .single();
-    
-  if (error && error.code !== 'PGRST116') {
-    // PGRST116 is "JSON object requested, multiple (or no) rows returned"
-    console.error("Erro ao buscar empresa", error);
-  }
+    .maybeSingle();
   
   return data || null;
 };

@@ -37,7 +37,7 @@ export default function CompanySettings({ user, currentData, onClose, onSaveSucc
     const dataToSave = { ...formData, end: compiledEnd };
 
     try {
-      await saveCompanyData(user.uid, dataToSave);
+      await saveCompanyData(user.id, dataToSave);
       toast.success("Dados da empresa salvos!");
       onSaveSuccess(dataToSave);
     } catch (error) {

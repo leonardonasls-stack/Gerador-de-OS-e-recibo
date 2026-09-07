@@ -20,7 +20,7 @@ export default function OSHistory({ user, onClose, onLoadOS, onNewOS, isPage }) 
   const loadHistory = async () => {
     setLoading(true);
     try {
-      const data = await getOSList(user.uid);
+      const data = await getOSList(user.id);
       setOsList(data);
     } catch (error) {
       console.error(error);

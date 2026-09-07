@@ -26,7 +26,7 @@ export default function ClientManager({ user, onClose, onClientSelect, isPage })
   const loadClients = async () => {
     setLoading(true);
     try {
-      const data = await getClients(user.uid);
+      const data = await getClients(user.id);
       setClients(data);
     } catch (error) {
       console.error(error);
@@ -44,10 +44,10 @@ export default function ClientManager({ user, onClose, onClientSelect, isPage })
     e.preventDefault();
     try {
       if (isEditing) {
-        await updateClient(user.uid, currentId, formData);
+        await updateClient(user.id, currentId, formData);
         toast.success("Cliente atualizado!");
       } else {
-        await addClient(user.uid, formData);
+        await addClient(user.id, formData);
         toast.success("Cliente adicionado!");
       }
       resetForm();
@@ -62,7 +62,7 @@ export default function ClientManager({ user, onClose, onClientSelect, isPage })
   const handleDelete = async (id) => {
     if (!window.confirm("Deseja realmente excluir este cliente?")) return;
     try {
-      await deleteClient(user.uid, id);
+      await deleteClient(user.id, id);
       toast.success("Cliente excluído!");
       loadClients();
     } catch (error) {

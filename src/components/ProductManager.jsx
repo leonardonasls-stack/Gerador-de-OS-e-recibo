@@ -26,7 +26,7 @@ export default function ProductManager({ user, onClose, onProductSelect, isPage 
   const loadProducts = async () => {
     setLoading(true);
     try {
-      const data = await getProducts(user.uid);
+      const data = await getProducts(user.id);
       setProducts(data);
     } catch (error) {
       console.error(error);
@@ -56,10 +56,10 @@ export default function ProductManager({ user, onClose, onProductSelect, isPage 
     e.preventDefault();
     try {
       if (isEditing) {
-        await updateProduct(user.uid, currentId, formData);
+        await updateProduct(user.id, currentId, formData);
         toast.success("Produto atualizado!");
       } else {
-        await addProduct(user.uid, formData);
+        await addProduct(user.id, formData);
         toast.success("Produto adicionado ao catálogo!");
       }
       resetForm();
@@ -74,7 +74,7 @@ export default function ProductManager({ user, onClose, onProductSelect, isPage 
   const handleDelete = async (id) => {
     if (!window.confirm("Deseja realmente excluir este produto?")) return;
     try {
-      await deleteProduct(user.uid, id);
+      await deleteProduct(user.id, id);
       toast.success("Produto excluído!");
       loadProducts();
     } catch (error) {

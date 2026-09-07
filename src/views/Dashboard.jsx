@@ -18,7 +18,7 @@ export default function Dashboard({ data, user }) {
   const loadMetrics = async () => {
     if (!user) return;
     try {
-      const osList = await getOSList(user.uid);
+      const osList = await getOSList(user.id);
       
       const today = new Date().toLocaleDateString('pt-BR');
       const currentMonth = new Date().getMonth();
