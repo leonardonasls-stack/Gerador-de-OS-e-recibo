@@ -1,184 +1,21 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gerador de Ordem de Serviço</title>
-    <link rel="stylesheet" href="css/styles.css">
-    <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#1a5276">
-    <link rel="icon" type="image/png" href="assets/icon-192.png">
-</head>
-
-<body>
-
-    <!-- BARRA LATERAL: FORMULÁRIO -->
-    <div class="sidebar">
-        <button type="button" class="btn-primary" onclick="window.print()">🖨️ Imprimir / Salvar PDF</button>
-        <button type="button" id="btn-install" class="btn-install">📱 Instalar
-            Aplicativo</button>
-
-        <h2>0. Dados da Empresa</h2>
-        <div class="form-group"><label for="in-emp-nome">Nome da Empresa</label><input type="text" id="in-emp-nome"
-                value="LLSystem - Soluções Tecnológicas" onkeyup="updateField('emp-nome')"></div>
-        <div class="row">
-            <div class="form-group"><label for="in-emp-cnpj">CNPJ / CPF</label><input type="text" id="in-emp-cnpj"
-                    value="" placeholder="00.000.000/0000-00" onkeyup="updateField('emp-cnpj')"></div>
-            <div class="form-group"><label for="in-emp-tel">Telefone / WhatsApp</label><input type="text"
-                    id="in-emp-tel" value="" placeholder="(00) 00000-0000" onkeyup="updateField('emp-tel')"></div>
-        </div>
-        <div class="form-group"><label for="in-emp-email">E-mail</label><input type="text" id="in-emp-email" value=""
-                placeholder="contato@empresa.com" onkeyup="updateField('emp-email')"></div>
-        <div class="form-group"><label for="in-emp-end">Endereço Completo</label><input type="text" id="in-emp-end"
-                value="Maceió/AL" onkeyup="updateField('emp-end')"></div>
-
-        <h2>1. Dados da OS</h2>
-        <div class="row">
-            <div class="form-group"><label for="in-os">Nº da OS</label><input type="text" id="in-os" value="0024/2026"
-                    onkeyup="updateField('os')"></div>
-            <div class="form-group"><label for="in-data">Data</label><input type="text" id="in-data"
-                    value="23 de agosto de 2026" onkeyup="updateField('data')"></div>
-        </div>
-
-        <h2>2. Cliente</h2>
-        <div class="form-group"><label for="in-cliente-nome">Nome / Razão Social</label><input type="text"
-                id="in-cliente-nome" placeholder="Nome do cliente" onkeyup="updateField('cliente-nome')"></div>
-        <div class="form-group"><label for="in-cliente-doc">CPF / CNPJ</label><input type="text" id="in-cliente-doc"
-                placeholder="000.000.000-00" onkeyup="updateField('cliente-doc')"></div>
-        <div class="form-group"><label for="in-cliente-end">Endereço Completo</label><input type="text"
-                id="in-cliente-end" onkeyup="updateField('cliente-end')"></div>
-        <div class="form-group"><label for="in-cliente-contato">Contato (Telefone/Email)</label><input type="text"
-                id="in-cliente-contato" onkeyup="updateField('cliente-contato')"></div>
-
-        <h2>3. Detalhes do Serviço</h2>
-        <div class="form-group"><label for="in-servico">Descrição do Serviço Realizado</label><textarea id="in-servico"
-                placeholder="Descreva o serviço executado de forma clara..."
-                onkeyup="updateField('servico')"></textarea></div>
-
-        <h2>4. Serviços e Peças (Itens)</h2>
-        <div id="items-container">
-            <!-- Linhas de itens geradas por JS -->
-        </div>
-        <button type="button" class="btn-secondary" onclick="addItem()">+ Adicionar Item</button>
-
-        <div class="row mt-15">
-            <div class="form-group"><label for="in-desconto">Desconto (R$)</label><input type="number" id="in-desconto"
-                    value="0.00" step="0.01" onkeyup="calculateTotals()" onchange="calculateTotals()"></div>
-        </div>
-
-        <h2>5. Assinaturas</h2>
-        <div class="form-group"><label for="in-tecnico">Nome do Técnico</label><input type="text" id="in-tecnico"
-                value="Leonardo Nascimento" onkeyup="updateField('tecnico')"></div>
-    </div>
-
-    <!-- ÁREA DE PREVIEW: ORÇAMENTO A4 -->
-    <div class="preview-area">
-        <div class="a4-page">
-            <div class="os-header-new">
-                <div class="os-header-left">
-                    <h1 id="out-emp-nome">LLSystem - Soluções Tecnológicas</h1>
-                    <p><strong>CNPJ:</strong> <span id="out-emp-cnpj">-</span></p>
-                    <p><strong>Endereço:</strong> <span id="out-emp-end">Maceió/AL</span></p>
-                    <p><strong>Telefone / WhatsApp:</strong> <span id="out-emp-tel">-</span></p>
-                    <p><strong>E-mail:</strong> <span id="out-emp-email">-</span></p>
-                </div>
-                <div class="os-header-right">
-                    <h2>ORÇAMENTO</h2>
-                    <p>OS Nº: <span id="out-os">0024/2026</span></p>
-                    <p>Data: <span id="out-data">23 de agosto de 2026</span></p>
-                </div>
-            </div>
-
-            <div class="client-box">
-                <div class="client-title">Dados do Cliente</div>
-                <div class="client-info-line"><strong>Nome / Razão Social:</strong> <span id="out-cliente-nome"></span>
-                </div>
-                <div class="client-info-line"><strong>CPF / CNPJ:</strong> <span id="out-cliente-doc"></span></div>
-                <div class="client-info-line"><strong>Endereço:</strong> <span id="out-cliente-end"></span></div>
-                <div class="client-info-line"><strong>Contato:</strong> <span id="out-cliente-contato"></span></div>
-            </div>
-
-            <div class="os-section">
-                <div class="os-section-title">Detalhes do Serviço</div>
-                <div class="os-text-block"><strong>Serviço Realizado:</strong> <span id="out-servico"></span></div>
-            </div>
-
-            <div class="os-section">
-                <div class="os-section-title">Valores (Serviços e Peças)</div>
-                <table class="os-items-table">
-                    <thead>
-                        <tr>
-                            <th class="w-8">Item</th>
-                            <th class="w-52 text-left">Descrição (Serviço / Peça)</th>
-                            <th class="w-10">Qtd</th>
-                            <th class="w-15">V. Unit (R$)</th>
-                            <th class="w-15">V. Total (R$)</th>
-                        </tr>
-                    </thead>
-                    <tbody id="out-items-body">
-                        <!-- Itens renderizados aqui -->
-                    </tbody>
-                </table>
-
-                <div class="os-totals">
-                    <table>
-                        <tbody>
-                            <tr>
-                                <td>Subtotal:</td>
-                                <td id="out-subtotal">R$ 0,00</td>
-                            </tr>
-                            <tr>
-                                <td>Desconto:</td>
-                                <td id="out-desconto">R$ 0,00</td>
-                            </tr>
-                            <tr class="os-grand-total">
-                                <td>Total Geral:</td>
-                                <td id="out-total">R$ 0,00</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-            <div class="os-footer">
-                <div class="os-section-title">Termo de Garantia e Conclusão</div>
-                <ol>
-                    <li><strong>Garantia:</strong> O serviço acima especificado possui garantia de 90 dias a partir da
-                        data de entrega, cobrindo apenas defeitos de fabricação das peças substituídas ou falhas na mão
-                        de obra.</li>
-                    <li><strong>Aprovação:</strong> A assinatura abaixo atesta a ciência dos termos, o aceite dos
-                        valores e a verificação do serviço executado.</li>
-                </ol>
-            </div>
-
-            <table class="os-signatures">
-                <tbody>
-                    <tr>
-                        <td>
-                            <div class="os-sig-line">
-                                <span id="out-tecnico">Leonardo Nascimento</span><br>
-                                <span class="os-sig-sub" id="out-emp-assinatura">LLSystem - Soluções Tecnológicas</span>
-                            </div>
-                        </td>
-                        <td>
-                            <div class="os-sig-line">
-                                <span id="out-cliente-assinatura">Cliente</span><br>
-                                <span class="os-sig-sub">Assinatura do Cliente</span>
-                            </div>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
-
-            <div class="os-disclaimer">
-                Documento de controle interno da prestação de serviços. Não possui validade como nota fiscal.
-            </div>
-        </div>
-    </div>
-
-    <!-- SCRIPT DE INTERAÇÃO -->
-    <script src="js/app.js" defer></script>
-</body>
-
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Gerador de OS</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+    
+    <!-- Material Symbols Outlined -->
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap" rel="stylesheet" />
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
 </html>
