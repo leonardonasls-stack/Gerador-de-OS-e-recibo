@@ -86,7 +86,7 @@ export default function Dashboard() {
             <span>Novo Cliente</span>
           </Link>
 
-          <button onClick={onNewOS} className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-brand-navy text-white text-sm font-semibold shadow-md hover:bg-[#0a273c] transition-all">
+          <button onClick={handleNewOS} className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-brand-navy text-white text-sm font-semibold shadow-md hover:bg-[#0a273c] transition-all">
             <span className="material-symbols-outlined text-[20px]">add_circle</span>
             <span>Nova OS</span>
           </button>

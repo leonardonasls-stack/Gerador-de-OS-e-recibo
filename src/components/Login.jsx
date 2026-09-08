@@ -19,8 +19,11 @@ export default function Login() {
     const msg = err.message || err.toString();
     const msgLower = msg.toLowerCase();
 
-    // A proteção de rate limit (bloqueio por muitas tentativas) aplica-se apenas no login
-    if (!isRegisterMode && (msgLower.includes('rate limit') || msgLower.includes('60 seconds') || msgLower.includes('over_email_send_limit') || msgLower.includes('too many requests'))) {
+    if (msgLower.includes('email rate limit exceeded') || msgLower.includes('over_email_send_limit')) {
+      return 'O Supabase bloqueou o envio por limite de e-mails de confirmação. Desative a opção "Confirm email" no painel do Supabase (Authentication -> Providers -> Email) para permitir cadastros ilimitados sem confirmação.';
+    }
+    // A proteção de rate limit de login (bloqueio por tentativas de senha) aplica-se apenas no login
+    if (!isRegisterMode && (msgLower.includes('rate limit') || msgLower.includes('60 seconds') || msgLower.includes('too many requests'))) {
       return 'Por medida de segurança, foram feitas muitas tentativas recentes. Aguarde 1 minuto antes de tentar novamente.';
     }
     if (msgLower.includes('user already registered') || msgLower.includes('already in use') || msgLower.includes('already exists')) {
