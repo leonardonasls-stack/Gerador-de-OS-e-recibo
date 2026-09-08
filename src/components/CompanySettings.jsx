@@ -33,8 +33,13 @@ export default function CompanySettings({ user, currentData, onClose, onSaveSucc
     setLoading(true);
     const compPart = formData.complemento ? `, ${formData.complemento}` : '';
     const compiledEnd = `${formData.rua}, ${formData.numero}${compPart} - ${formData.cidade} - CEP: ${formData.cep}`;
-    const dataToSave = { ...formData, end: compiledEnd };
-
+    const dataToSave = { 
+      nome: formData.nome,
+      cnpj: formData.cnpj,
+      fone: formData.fone,
+      email: formData.email,
+      end: compiledEnd 
+    };
     try {
       await saveCompanyData(user.id, dataToSave);
       toast.success("Dados da empresa salvos!");
