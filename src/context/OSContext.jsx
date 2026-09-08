@@ -6,6 +6,7 @@ import { useNavigate } from 'react-router-dom';
 const OSContext = createContext();
 
 const initialOSData = {
+  id: null,
   empresa: { nome: '', endereco: '', cnpj: '', telefone: '', email: '' },
   os: { numero: '', data: new Date().toISOString().split('T')[0], status: 'Aberta', tipo_atendimento: 'Equipamento' },
   cliente: { nome: '', documento: '', contato: '', cep: '', rua: '', numero_end: '', complemento: '', bairro: '', cidade: '' },
@@ -116,8 +117,12 @@ export function OSProvider({ children }) {
       return;
     }
     try {
-      await saveOSService(userId, data);
+      const savedId = await saveOSService(userId, data);
+      if (savedId) {
+        dispatch({ type: 'UPDATE_SIMPLE_FIELD', payload: { field: 'id', value: savedId } });
+      }
       toast.success("OS salva com sucesso!");
+      return savedId;
     } catch (error) {
       console.error(error);
       toast.error("Erro ao salvar a OS.");

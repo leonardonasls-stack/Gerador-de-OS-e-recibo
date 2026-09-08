@@ -15,6 +15,19 @@ export default function OSEditor() {
   const [showProductSelector, setShowProductSelector] = useState(false);
   const [showEquipmentManager, setShowEquipmentManager] = useState(false);
   const [showOSHistory, setShowOSHistory] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+
+  const handleSave = async () => {
+    if (isSaving) return;
+    setIsSaving(true);
+    try {
+      await saveCurrentOS(user?.id);
+    } catch (err) {
+      // toast error handled inside saveCurrentOS
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   // Dispatch helpers
   const onChange = (section, field, value) => {
@@ -317,9 +330,13 @@ export default function OSEditor() {
           <button className="h-9 px-3 rounded text-slate-400 hover:text-red-500 hover:bg-slate-50 font-semibold text-sm transition-colors" type="button">Limpar</button>
         </div>
         <div className="flex items-center gap-2">
-          <button onClick={() => saveCurrentOS(user?.id)} className="h-9 px-6 rounded bg-brand-navy hover:bg-[#0a273c] text-white font-semibold text-sm shadow-md transition-colors flex items-center gap-2">
-            <span className="material-symbols-outlined text-[18px]">check_circle</span>
-            <span>Salvar OS</span>
+          <button 
+            onClick={handleSave} 
+            disabled={isSaving}
+            className={`h-9 px-6 rounded bg-brand-navy hover:bg-[#0a273c] text-white font-semibold text-sm shadow-md transition-colors flex items-center gap-2 ${isSaving ? 'opacity-50 cursor-not-allowed' : ''}`}
+          >
+            <span className="material-symbols-outlined text-[18px]">{isSaving ? 'sync' : 'check_circle'}</span>
+            <span>{isSaving ? 'Salvando...' : 'Salvar OS'}</span>
           </button>
         </div>
       </div>
