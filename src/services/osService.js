@@ -22,57 +22,38 @@ export const saveOS = async (userId, osData) => {
   const numeroInt = parseInt(String(osData.os.numero).split('/')[0], 10) || 1;
   const isEditing = !!osData.id; 
   
-  // 1. Upsert na tabela OS
+  // Prepara o payload principal da OS
   const osPayload = {
-    user_id: userId,
+    ...(isEditing ? { id: osData.id } : {}),
     numero: numeroInt,
     data: osData.os.data,
     status: osData.os.status,
-    cliente_id: osData.cliente.id || null,
+    cliente_id: osData.cliente?.id || null,
     cliente_snapshot: osData.cliente,
     equipamento: osData.equipamento,
     servico: osData.servico,
-    // obsInterna: osData.obsInterna, // Removido temporariamente pois a coluna 'obsInterna' não existe na tabela 'os' do Supabase
+    obsInterna: osData.obsInterna,
     desconto: Number(osData.desconto) || 0,
     tecnico: osData.tecnico
   };
 
-  let osId = osData.id;
+  // Prepara o payload de itens
+  const itemsPayload = (osData.items || []).map(item => ({
+    desc: item.desc,
+    qtd: Number(item.qtd) || 1,
+    val: Number(item.val) || 0
+  }));
 
-  if (isEditing) {
-    const { error } = await supabase
-      .from('os')
-      .update(osPayload)
-      .eq('id', osId)
-      .eq('user_id', userId);
-    if (error) throw error;
-  } else {
-    const { data, error } = await supabase
-      .from('os')
-      .insert([osPayload])
-      .select()
-      .single();
-    if (error) throw error;
-    osId = data.id;
-  }
+  // Executa tudo na transação atômica do Supabase
+  const { data, error } = await supabase.rpc('save_os_transaction', {
+    p_user_id: userId,
+    p_os_data: osPayload,
+    p_items_data: itemsPayload
+  });
 
-  // 2. Sincronizar Items (Deletar antigos e inserir novos)
-  if (isEditing) {
-    await supabase.from('os_items').delete().eq('os_id', osId);
-  }
-
-  if (osData.items && osData.items.length > 0) {
-    const itemsPayload = osData.items.map(item => ({
-      os_id: osId,
-      desc: item.desc,
-      qtd: Number(item.qtd) || 1,
-      val: Number(item.val) || 0
-    }));
-    const { error: itemsError } = await supabase.from('os_items').insert(itemsPayload);
-    if (itemsError) throw itemsError;
-  }
+  if (error) throw error;
   
-  return osId;
+  return data.os_id;
 };
 
 export const getOSList = async (userId) => {

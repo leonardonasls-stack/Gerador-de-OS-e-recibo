@@ -70,7 +70,7 @@ export default function ClientManager({ user, onClose, onClientSelect, isPage })
       nome: formData.nome,
       doc: formData.doc,
       contato: formData.contato,
-      // obs: formData.obs, // Removido temporariamente pois a coluna 'obs' não existe na tabela 'clientes' do Supabase
+      obs: formData.obs,
       end: endFormatado
     };
 
