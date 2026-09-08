@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { signInWithEmail, signUpWithEmail, supabase } from '../services/supabase';
-import { LogIn, UserPlus } from 'lucide-react';
+import { LogIn, UserPlus, Eye, EyeOff } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 
 export default function Login() {
@@ -9,15 +9,18 @@ export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const translateAuthError = (err) => {
+  const translateAuthError = (err, isRegisterMode = false) => {
     if (!err) return 'Ocorreu um erro inesperado.';
     const msg = err.message || err.toString();
     const msgLower = msg.toLowerCase();
 
-    if (msgLower.includes('rate limit') || msgLower.includes('60 seconds') || msgLower.includes('over_email_send_limit') || msgLower.includes('too many requests')) {
+    // A proteção de rate limit (bloqueio por muitas tentativas) aplica-se apenas no login
+    if (!isRegisterMode && (msgLower.includes('rate limit') || msgLower.includes('60 seconds') || msgLower.includes('over_email_send_limit') || msgLower.includes('too many requests'))) {
       return 'Por medida de segurança, foram feitas muitas tentativas recentes. Aguarde 1 minuto antes de tentar novamente.';
     }
     if (msgLower.includes('user already registered') || msgLower.includes('already in use') || msgLower.includes('already exists')) {
@@ -56,7 +59,7 @@ export default function Login() {
         await signInWithEmail(email, password);
       }
     } catch (err) {
-      setError(translateAuthError(err));
+      setError(translateAuthError(err, isRegistering));
       console.error(err);
     } finally {
       setLoading(false);
@@ -87,6 +90,8 @@ export default function Login() {
     setNome('');
     setPassword('');
     setConfirmPassword('');
+    setShowPassword(false);
+    setShowConfirmPassword(false);
   };
 
   return (
@@ -134,29 +139,49 @@ export default function Login() {
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Senha</label>
-            <input 
-              type="password" 
-              required
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full border border-gray-300 rounded p-2 focus:ring-[#1a5276] focus:border-[#1a5276] outline-none"
-              placeholder="••••••••"
-              autoComplete={isRegistering ? "new-password" : "current-password"}
-            />
+            <div className="relative">
+              <input 
+                type={showPassword ? "text" : "password"} 
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full border border-gray-300 rounded p-2 pr-10 focus:ring-[#1a5276] focus:border-[#1a5276] outline-none"
+                placeholder="••••••••"
+                autoComplete={isRegistering ? "new-password" : "current-password"}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 p-1 focus:outline-none flex items-center justify-center"
+                title={showPassword ? "Ocultar senha" : "Visualizar senha"}
+              >
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            </div>
           </div>
 
           {isRegistering && (
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Confirmar Senha</label>
-              <input 
-                type="password" 
-                required
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                className="w-full border border-gray-300 rounded p-2 focus:ring-[#1a5276] focus:border-[#1a5276] outline-none"
-                placeholder="••••••••"
-                autoComplete="new-password"
-              />
+              <div className="relative">
+                <input 
+                  type={showConfirmPassword ? "text" : "password"} 
+                  required
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  className="w-full border border-gray-300 rounded p-2 pr-10 focus:ring-[#1a5276] focus:border-[#1a5276] outline-none"
+                  placeholder="••••••••"
+                  autoComplete="new-password"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 p-1 focus:outline-none flex items-center justify-center"
+                  title={showConfirmPassword ? "Ocultar senha" : "Visualizar senha"}
+                >
+                  {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
             </div>
           )}
 
