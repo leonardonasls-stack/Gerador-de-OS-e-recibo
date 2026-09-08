@@ -119,9 +119,37 @@ export default function OSEditor({
                 <label className="text-[10px] font-semibold uppercase text-slate-400">Contato</label>
                 <input className="h-8 px-3 rounded bg-white text-slate-900 font-mono text-sm border border-slate-200 focus:outline-none focus:ring-1 focus:ring-sky-500 shadow-sm" value={data.cliente.contato} onChange={(e) => onChange('cliente', 'contato', e.target.value)} />
               </div>
+
+              {/* Endereço - Linha 1 */}
               <div className="flex flex-col gap-1 sm:col-span-2">
-                <label className="text-[10px] font-semibold uppercase text-slate-400">Endereço Completo</label>
-                <input className="h-8 px-3 rounded bg-white text-slate-900 text-sm border border-slate-200 focus:outline-none focus:ring-1 focus:ring-sky-500 shadow-sm" value={data.cliente.end} onChange={(e) => onChange('cliente', 'end', e.target.value)} />
+                <label className="text-[10px] font-semibold uppercase text-slate-400">Rua / Logradouro</label>
+                <input className="h-8 px-3 rounded bg-white text-slate-900 text-sm border border-slate-200 focus:outline-none focus:ring-1 focus:ring-sky-500 shadow-sm" value={data.cliente.rua || data.cliente.end} onChange={(e) => onChange('cliente', 'rua', e.target.value)} />
+              </div>
+
+              {/* Endereço - Linha 2 */}
+              <div className="flex flex-col gap-1">
+                <label className="text-[10px] font-semibold uppercase text-slate-400">Número</label>
+                <input className="h-8 px-3 rounded bg-white text-slate-900 text-sm border border-slate-200 focus:outline-none focus:ring-1 focus:ring-sky-500 shadow-sm" value={data.cliente.numero} onChange={(e) => onChange('cliente', 'numero', e.target.value)} />
+              </div>
+              <div className="flex flex-col gap-1">
+                <label className="text-[10px] font-semibold uppercase text-slate-400">Complemento</label>
+                <input className="h-8 px-3 rounded bg-white text-slate-900 text-sm border border-slate-200 focus:outline-none focus:ring-1 focus:ring-sky-500 shadow-sm" value={data.cliente.complemento} onChange={(e) => onChange('cliente', 'complemento', e.target.value)} />
+              </div>
+
+              {/* Endereço - Linha 3 */}
+              <div className="flex flex-col gap-1">
+                <label className="text-[10px] font-semibold uppercase text-slate-400">Bairro</label>
+                <input className="h-8 px-3 rounded bg-white text-slate-900 text-sm border border-slate-200 focus:outline-none focus:ring-1 focus:ring-sky-500 shadow-sm" value={data.cliente.bairro} onChange={(e) => onChange('cliente', 'bairro', e.target.value)} />
+              </div>
+              <div className="flex flex-col gap-1">
+                <label className="text-[10px] font-semibold uppercase text-slate-400">Cidade - UF</label>
+                <input className="h-8 px-3 rounded bg-white text-slate-900 text-sm border border-slate-200 focus:outline-none focus:ring-1 focus:ring-sky-500 shadow-sm" value={data.cliente.cidade} onChange={(e) => onChange('cliente', 'cidade', e.target.value)} />
+              </div>
+              
+              {/* Endereço - Linha 4 */}
+              <div className="flex flex-col gap-1 sm:col-span-2">
+                <label className="text-[10px] font-semibold uppercase text-slate-400">CEP</label>
+                <input className="h-8 px-3 rounded bg-white text-slate-900 font-mono text-sm border border-slate-200 focus:outline-none focus:ring-1 focus:ring-sky-500 shadow-sm" value={data.cliente.cep} onChange={(e) => onChange('cliente', 'cep', e.target.value)} />
               </div>
             </div>
           </div>

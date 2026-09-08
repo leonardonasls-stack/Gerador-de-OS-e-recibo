@@ -14,9 +14,15 @@ export default function ClientManager({ user, onClose, onClientSelect, isPage })
   const [formData, setFormData] = useState({
     nome: '',
     doc: '',
-    end: '',
     contato: '',
-    obs: ''
+    obs: '',
+    cep: '',
+    rua: '',
+    numero: '',
+    complemento: '',
+    bairro: '',
+    cidade: '',
+    end: '' // usado para fallback
   });
 
   useEffect(() => {
@@ -42,12 +48,27 @@ export default function ClientManager({ user, onClose, onClientSelect, isPage })
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    // Concatenar endereço para o Supabase (que só tem a coluna 'end')
+    let endFormatado = formData.end;
+    if (formData.rua || formData.cidade || formData.bairro) {
+      endFormatado = `${formData.rua || ''}, ${formData.numero || 'S/N'}${formData.complemento ? ' ('+formData.complemento+')' : ''} - ${formData.bairro || ''} - ${formData.cidade || ''} - CEP: ${formData.cep || ''}`;
+    }
+
+    const payload = {
+      nome: formData.nome,
+      doc: formData.doc,
+      contato: formData.contato,
+      obs: formData.obs,
+      end: endFormatado
+    };
+
     try {
       if (isEditing) {
-        await updateClient(user.id, currentId, formData);
+        await updateClient(user.id, currentId, payload);
         toast.success("Cliente atualizado!");
       } else {
-        await addClient(user.id, formData);
+        await addClient(user.id, payload);
         toast.success("Cliente adicionado!");
       }
       resetForm();
@@ -74,12 +95,19 @@ export default function ClientManager({ user, onClose, onClientSelect, isPage })
   const startEdit = (client) => {
     setIsEditing(true);
     setCurrentId(client.id);
+    // Tentativa simples de parse, se não conseguir, joga no 'end' e na 'rua'
     setFormData({
       nome: client.nome || '',
       doc: client.doc || '',
-      end: client.end || '',
       contato: client.contato || '',
-      obs: client.obs || ''
+      obs: client.obs || '',
+      cep: '',
+      rua: client.end || '',
+      numero: '',
+      complemento: '',
+      bairro: '',
+      cidade: '',
+      end: client.end || ''
     });
     setIsFormOpen(true);
   };
@@ -92,7 +120,7 @@ export default function ClientManager({ user, onClose, onClientSelect, isPage })
   const resetForm = () => {
     setIsEditing(false);
     setCurrentId(null);
-    setFormData({ nome: '', doc: '', end: '', contato: '', obs: '' });
+    setFormData({ nome: '', doc: '', contato: '', obs: '', cep: '', rua: '', numero: '', complemento: '', bairro: '', cidade: '', end: '' });
   };
 
   const handleSelect = (client) => {
@@ -269,13 +297,61 @@ export default function ClientManager({ user, onClose, onClientSelect, isPage })
                   </div>
                 </div>
                 
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-[11px] font-semibold uppercase text-slate-500">Endereço Completo</label>
-                  <textarea 
-                    name="end" value={formData.end} onChange={handleChange} rows="2"
-                    placeholder="Rua, Número, Bairro, Cidade - UF"
-                    className="p-3 rounded-lg bg-white border border-slate-200 text-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 shadow-sm transition-all w-full resize-none"
-                  ></textarea>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-[11px] font-semibold uppercase text-slate-500">CEP</label>
+                    <input 
+                      type="text" name="cep" value={formData.cep} onChange={handleChange}
+                      placeholder="00000-000"
+                      className="h-10 px-3 rounded-lg bg-white border border-slate-200 text-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 shadow-sm transition-all w-full"
+                    />
+                  </div>
+                  <div className="flex flex-col gap-1.5 sm:col-span-2">
+                    <label className="text-[11px] font-semibold uppercase text-slate-500">Rua / Logradouro</label>
+                    <input 
+                      type="text" name="rua" value={formData.rua} onChange={handleChange}
+                      placeholder="Nome da rua"
+                      className="h-10 px-3 rounded-lg bg-white border border-slate-200 text-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 shadow-sm transition-all w-full"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-[11px] font-semibold uppercase text-slate-500">Número</label>
+                    <input 
+                      type="text" name="numero" value={formData.numero} onChange={handleChange}
+                      placeholder="123"
+                      className="h-10 px-3 rounded-lg bg-white border border-slate-200 text-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 shadow-sm transition-all w-full"
+                    />
+                  </div>
+                  <div className="flex flex-col gap-1.5 sm:col-span-2">
+                    <label className="text-[11px] font-semibold uppercase text-slate-500">Complemento</label>
+                    <input 
+                      type="text" name="complemento" value={formData.complemento} onChange={handleChange}
+                      placeholder="Apto 45, Bloco B"
+                      className="h-10 px-3 rounded-lg bg-white border border-slate-200 text-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 shadow-sm transition-all w-full"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-[11px] font-semibold uppercase text-slate-500">Bairro</label>
+                    <input 
+                      type="text" name="bairro" value={formData.bairro} onChange={handleChange}
+                      placeholder="Centro"
+                      className="h-10 px-3 rounded-lg bg-white border border-slate-200 text-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 shadow-sm transition-all w-full"
+                    />
+                  </div>
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-[11px] font-semibold uppercase text-slate-500">Cidade - UF</label>
+                    <input 
+                      type="text" name="cidade" value={formData.cidade} onChange={handleChange}
+                      placeholder="São Paulo - SP"
+                      className="h-10 px-3 rounded-lg bg-white border border-slate-200 text-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 shadow-sm transition-all w-full"
+                    />
+                  </div>
                 </div>
                 
                 <div className="flex flex-col gap-1.5 pt-2 border-t border-slate-200 mt-2">

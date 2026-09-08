@@ -74,7 +74,13 @@ export default function PreviewA4({ data }) {
             </div>
             <div className="flex flex-col col-span-4">
               <span className="text-slate-500 text-[10px] uppercase">Endereço de Atendimento</span>
-              <span className="text-slate-800 text-xs">{data.cliente?.end || '-'}</span>
+              <span className="text-slate-800 text-xs">
+                {data.cliente?.rua || data.cliente?.cidade || data.cliente?.bairro ? (
+                  `${data.cliente.rua || ''}, ${data.cliente.numero || 'S/N'}${data.cliente.complemento ? ' ('+data.cliente.complemento+')' : ''} - ${data.cliente.bairro || ''} - ${data.cliente.cidade || ''} - CEP: ${data.cliente.cep || ''}`
+                ) : (
+                  data.cliente?.end || '-'
+                )}
+              </span>
             </div>
           </div>
         </div>

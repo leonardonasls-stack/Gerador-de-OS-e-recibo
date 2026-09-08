@@ -23,7 +23,7 @@ function AppContent() {
     os: {
       numero: '', data: new Date().toLocaleDateString('pt-BR'), status: 'Aberta'
     },
-    cliente: { nome: '', doc: '', end: '', contato: '' },
+    cliente: { nome: '', doc: '', contato: '', cep: '', rua: '', numero: '', complemento: '', bairro: '', cidade: '', end: '' },
     equipamento: '',
     servico: '',
     obsInterna: '',
@@ -149,7 +149,7 @@ function AppContent() {
         data: osData.os?.data || '',
         status: osData.os?.status || 'Aberta'
       },
-      cliente: osData.cliente || { nome: '', doc: '', end: '', contato: '' },
+      cliente: osData.cliente || { nome: '', doc: '', contato: '', cep: '', rua: '', numero: '', complemento: '', bairro: '', cidade: '', end: '' },
       equipamento: osData.equipamento || '',
       servico: osData.servico || '',
       obsInterna: osData.obsInterna || '',
@@ -167,7 +167,7 @@ function AppContent() {
       setData(prev => ({
         empresa: prev.empresa, // Keep company data
         os: { numero: nextOS, data: new Date().toLocaleDateString('pt-BR'), status: 'Aberta' },
-        cliente: { nome: '', doc: '', end: '', contato: '' },
+        cliente: { nome: '', doc: '', contato: '', cep: '', rua: '', numero: '', complemento: '', bairro: '', cidade: '', end: '' },
         equipamento: '',
         servico: '',
         obsInterna: '',
