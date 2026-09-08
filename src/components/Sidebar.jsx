@@ -94,16 +94,16 @@ export default function Sidebar({ user, onLogout, isOpen, onClose }) {
 
       <div className="p-3 border-t border-slate-800 bg-slate-900/70">
         <div className="flex items-center gap-3 p-2 rounded-lg bg-slate-800/60 hover:bg-slate-800 transition-colors">
-          {user?.photoURL ? (
-            <img alt="Perfil" className="w-10 h-10 rounded-full object-cover border-2 border-sky-500 shrink-0" src={user.photoURL} />
+          {user?.user_metadata?.avatar_url ? (
+            <img alt="Perfil" className="w-10 h-10 rounded-full object-cover border-2 border-sky-500 shrink-0" src={user.user_metadata.avatar_url} />
           ) : (
             <div className="w-10 h-10 rounded-full bg-slate-700 text-slate-300 flex items-center justify-center font-bold text-sm shrink-0 border-2 border-sky-500">
-              {user?.displayName ? user.displayName.charAt(0).toUpperCase() : 'U'}
+              {user?.user_metadata?.display_name ? user.user_metadata.display_name.charAt(0).toUpperCase() : (user?.email ? user.email.charAt(0).toUpperCase() : 'U')}
             </div>
           )}
           <div className="user-info flex-1 min-w-0">
-            <p className="text-sm font-semibold text-white truncate">{user?.displayName || '-'}</p>
-            <p className="text-xs text-sky-400 font-medium truncate">-</p>
+            <p className="text-sm font-semibold text-white truncate">{user?.user_metadata?.display_name || user?.email?.split('@')[0] || 'Usuário'}</p>
+            <p className="text-xs text-sky-400 font-medium truncate">Técnico</p>
           </div>
           <button 
             onClick={onLogout}
