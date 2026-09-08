@@ -95,19 +95,36 @@ export default function ClientManager({ user, onClose, onClientSelect, isPage })
   const startEdit = (client) => {
     setIsEditing(true);
     setCurrentId(client.id);
-    // Tentativa simples de parse, se não conseguir, joga no 'end' e na 'rua'
-    setFormData({
-      nome: client.nome || '',
-      doc: client.doc || '',
-      contato: client.contato || '',
-      obs: client.obs || '',
-      cep: '',
+    
+    let parsedAddress = {
       rua: client.end || '',
       numero: '',
       complemento: '',
       bairro: '',
       cidade: '',
-      end: client.end || ''
+      cep: ''
+    };
+    
+    // Tenta desmembrar a string de endereço concatenada
+    if (client.end) {
+      const match = client.end.match(/^(.*?), (.*?)(?: \((.*?)\))? - (.*?) - (.*?) - CEP: (.*?)$/);
+      if (match) {
+        parsedAddress.rua = match[1] || '';
+        parsedAddress.numero = match[2] || '';
+        parsedAddress.complemento = match[3] || '';
+        parsedAddress.bairro = match[4] || '';
+        parsedAddress.cidade = match[5] || '';
+        parsedAddress.cep = match[6] || '';
+      }
+    }
+
+    setFormData({
+      nome: client.nome || '',
+      doc: client.doc || '',
+      contato: client.contato || '',
+      obs: client.obs || '',
+      end: client.end || '',
+      ...parsedAddress
     });
     setIsFormOpen(true);
   };

@@ -116,9 +116,26 @@ function AppContent() {
   };
 
   const handleClientSelect = (clientData) => {
+    let parsedData = { ...clientData };
+    
+    // Tenta desmembrar a string de endereço gerada pelo ClientManager
+    if (parsedData.end && !parsedData.rua) {
+      const match = parsedData.end.match(/^(.*?), (.*?)(?: \((.*?)\))? - (.*?) - (.*?) - CEP: (.*?)$/);
+      if (match) {
+        parsedData.rua = match[1] || '';
+        parsedData.numero = match[2] || '';
+        parsedData.complemento = match[3] || '';
+        parsedData.bairro = match[4] || '';
+        parsedData.cidade = match[5] || '';
+        parsedData.cep = match[6] || '';
+      } else {
+        parsedData.rua = parsedData.end;
+      }
+    }
+
     setData(prev => ({
       ...prev,
-      cliente: clientData
+      cliente: parsedData
     }));
   };
 
