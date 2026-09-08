@@ -76,7 +76,7 @@ export default function ClientManager({ user, onClose, onClientSelect, isPage })
       loadClients();
     } catch (error) {
       console.error(error);
-      toast.error("Erro ao salvar cliente.");
+      toast.error("Erro: " + (error.message || "ao salvar cliente"));
     }
   };
 
