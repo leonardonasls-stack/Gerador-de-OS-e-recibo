@@ -43,6 +43,7 @@ function AppContent() {
   const [showProductSelector, setShowProductSelector] = useState(false);
   const [showOSHistory, setShowOSHistory] = useState(false);
   const [forceOnboarding, setForceOnboarding] = useState(false);
+  const [deferredPrompt, setDeferredPrompt] = useState(null);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -53,8 +54,27 @@ function AppContent() {
       handleUserSession(session?.user);
     });
 
-    return () => subscription.unsubscribe();
+    const handleBeforeInstallPrompt = (e) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+    };
+    
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+
+    return () => {
+      subscription.unsubscribe();
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    };
   }, []);
+
+  const handleInstallPwa = async () => {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    if (outcome === 'accepted') {
+      setDeferredPrompt(null);
+    }
+  };
 
   const handleUserSession = async (currentUser) => {
       setUser(currentUser);
@@ -354,6 +374,34 @@ function AppContent() {
             setShowOSHistory(false);
           }}
         />
+      )}
+
+      {deferredPrompt && (
+        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 md:bottom-6 md:right-6 md:left-auto md:translate-x-0 z-[999] bg-white rounded-lg shadow-2xl border border-slate-200 p-4 flex items-center gap-4 animate-bounce-short">
+          <div className="w-10 h-10 bg-[#1a5276] text-white rounded-lg flex items-center justify-center shrink-0">
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+            </svg>
+          </div>
+          <div className="flex-1">
+            <p className="text-sm font-bold text-slate-800">Instalar Aplicativo</p>
+            <p className="text-xs text-slate-500">Adicione à sua tela inicial</p>
+          </div>
+          <button 
+            onClick={handleInstallPwa}
+            className="bg-[#1a5276] text-white px-3 py-1.5 rounded text-xs font-semibold hover:bg-[#154360] transition-colors"
+          >
+            Instalar
+          </button>
+          <button 
+            onClick={() => setDeferredPrompt(null)}
+            className="text-slate-400 hover:text-slate-600 p-1"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
       )}
     </>
   );
