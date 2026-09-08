@@ -5,9 +5,8 @@ import { toast } from 'react-hot-toast';
 
 export default function CompanySettings({ user, currentData, onClose, onSaveSuccess, forceOnboarding, isPage }) {
   const [formData, setFormData] = useState({
-    nome: '',
     cnpj: '',
-    tel: '',
+    fone: '',
     email: '',
     rua: '',
     numero: '',
@@ -20,7 +19,7 @@ export default function CompanySettings({ user, currentData, onClose, onSaveSucc
 
   useEffect(() => {
     if (currentData) {
-      setFormData(currentData);
+      setFormData(prev => ({ ...prev, ...currentData }));
     }
   }, [currentData]);
 
@@ -73,28 +72,28 @@ export default function CompanySettings({ user, currentData, onClose, onSaveSucc
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Nome / Razão Social</label>
               <input 
-                type="text" name="nome" value={formData.nome} onChange={handleChange} required
+                type="text" name="nome" value={formData.nome || ''} onChange={handleChange} required
                 className="w-full border border-gray-300 rounded p-2 focus:ring-[#1a5276] focus:border-[#1a5276] outline-none"
               />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">CNPJ</label>
               <input 
-                type="text" name="cnpj" value={formData.cnpj} onChange={handleChange}
+                type="text" name="cnpj" value={formData.cnpj || ''} onChange={handleChange}
                 className="w-full border border-gray-300 rounded p-2 focus:ring-[#1a5276] focus:border-[#1a5276] outline-none"
               />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Telefone / WhatsApp</label>
               <input 
-                type="text" name="tel" value={formData.tel} onChange={handleChange}
+                type="text" name="fone" value={formData.fone || ''} onChange={handleChange}
                 className="w-full border border-gray-300 rounded p-2 focus:ring-[#1a5276] focus:border-[#1a5276] outline-none"
               />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">E-mail</label>
               <input 
-                type="email" name="email" value={formData.email} onChange={handleChange}
+                type="email" name="email" value={formData.email || ''} onChange={handleChange}
                 className="w-full border border-gray-300 rounded p-2 focus:ring-[#1a5276] focus:border-[#1a5276] outline-none"
               />
             </div>
