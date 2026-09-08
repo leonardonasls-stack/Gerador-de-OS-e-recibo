@@ -32,7 +32,7 @@ export const saveOS = async (userId, osData) => {
     cliente_snapshot: osData.cliente,
     equipamento: osData.equipamento,
     servico: osData.servico,
-    obsInterna: osData.obsInterna,
+    // obsInterna: osData.obsInterna, // Removido temporariamente pois a coluna 'obsInterna' não existe na tabela 'os' do Supabase
     desconto: Number(osData.desconto) || 0,
     tecnico: osData.tecnico
   };
