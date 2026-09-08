@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { getOSList } from '../services/osService';
 import { toast } from 'react-hot-toast';
 
-export default function Dashboard({ data, user }) {
+export default function Dashboard({ data, user, onNewOS }) {
   const [seeding, setSeeding] = useState(false);
   const currentDate = new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
 
@@ -107,10 +107,10 @@ export default function Dashboard({ data, user }) {
             <span>Novo Cliente</span>
           </Link>
 
-          <Link to="/os" className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-brand-navy text-white text-sm font-semibold shadow-md hover:bg-[#0a273c] transition-all">
+          <button onClick={onNewOS} className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-brand-navy text-white text-sm font-semibold shadow-md hover:bg-[#0a273c] transition-all">
             <span className="material-symbols-outlined text-[20px]">add_circle</span>
             <span>Nova OS</span>
-          </Link>
+          </button>
         </div>
       </div>
 

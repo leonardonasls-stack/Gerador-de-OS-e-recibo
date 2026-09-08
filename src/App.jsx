@@ -258,7 +258,7 @@ function AppContent() {
       <Routes>
         <Route path="/" element={
           <Layout user={user} onLogout={logout}>
-            <Dashboard data={data} user={user} />
+            <Dashboard data={data} user={user} onNewOS={handleNewOS} />
           </Layout>
         } />
         
