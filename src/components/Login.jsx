@@ -12,6 +12,30 @@ export default function Login() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
+  const translateAuthError = (err) => {
+    if (!err) return 'Ocorreu um erro inesperado.';
+    const msg = err.message || err.toString();
+    const msgLower = msg.toLowerCase();
+
+    if (msgLower.includes('rate limit') || msgLower.includes('60 seconds') || msgLower.includes('over_email_send_limit') || msgLower.includes('too many requests')) {
+      return 'Por medida de segurança, foram feitas muitas tentativas recentes. Aguarde 1 minuto antes de tentar novamente.';
+    }
+    if (msgLower.includes('user already registered') || msgLower.includes('already in use') || msgLower.includes('already exists')) {
+      return 'Este e-mail já está cadastrado. Tente fazer login ou recupere sua senha.';
+    }
+    if (msgLower.includes('password should be at least')) {
+      return 'A senha deve ter no mínimo 6 caracteres.';
+    }
+    if (msgLower.includes('invalid login credentials') || msgLower.includes('invalid credentials')) {
+      return 'E-mail ou senha incorretos.';
+    }
+    if (msgLower.includes('email not confirmed')) {
+      return 'E-mail ainda não confirmado. Verifique sua caixa de entrada.';
+    }
+
+    return msg;
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
@@ -26,11 +50,13 @@ export default function Login() {
     try {
       if (isRegistering) {
         await signUpWithEmail(email, password, nome);
+        toast.success("Conta cadastrada com sucesso! Faça login para continuar.");
+        toggleMode(false);
       } else {
         await signInWithEmail(email, password);
       }
     } catch (err) {
-      setError(err.message || "Ocorreu um erro inesperado.");
+      setError(translateAuthError(err));
       console.error(err);
     } finally {
       setLoading(false);
@@ -48,7 +74,7 @@ export default function Login() {
       if (error) throw error;
       toast.success("E-mail de recuperação de senha enviado!");
     } catch (err) {
-      setError(err.message || "Erro ao tentar enviar e-mail de recuperação.");
+      setError(translateAuthError(err));
     } finally {
       setLoading(false);
     }
