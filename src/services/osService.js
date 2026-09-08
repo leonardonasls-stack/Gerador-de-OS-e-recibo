@@ -100,7 +100,7 @@ export const getOSList = async (userId) => {
       })(),
       equipamento: row.equipamento || '',
       servico: row.servico || '',
-      obsInterna: row.obsInterna || '',
+      obsInterna: row.obs_interna || row.obsInterna || '',
       desconto: row.desconto || 0,
       tecnico: row.tecnico || '',
       items: row.items && row.items.length > 0 ? row.items : [{ id: 1, descricao: '', quantidade: 1, valor: 0 }]
