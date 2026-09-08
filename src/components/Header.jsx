@@ -11,19 +11,7 @@ export default function Header({ onMenuClick }) {
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16" />
           </svg>
         </button>
-        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400 lg:pl-3 pl-[3.25rem]">
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-          </svg>
-        </div>
-        <input 
-          className="block w-full pl-9 pr-14 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#0f3c5c] focus:border-transparent focus:bg-white transition-all lg:pl-9 pl-12" 
-          placeholder="Buscar OS, clientes ou serviços..." 
-          type="text" 
-        />
-        <div className="absolute inset-y-0 right-0 pr-2.5 flex items-center pointer-events-none">
-          <span className="text-[10px] font-mono font-medium text-slate-400 bg-white border border-slate-200 px-1.5 py-0.5 rounded shadow-xs">Alt + K</span>
-        </div>
+        {/* Search input removed temporarily (PROB-10) */}
       </div>
       
       <div className="flex items-center gap-4">

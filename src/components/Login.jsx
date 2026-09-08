@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { signInWithEmail, signUpWithEmail, supabase } from '../services/supabase';
 import { LogIn, UserPlus } from 'lucide-react';
+import { toast } from 'react-hot-toast';
 
 export default function Login() {
   const [isRegistering, setIsRegistering] = useState(false);
@@ -45,7 +46,7 @@ export default function Login() {
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(email);
       if (error) throw error;
-      alert("E-mail de recuperação de senha enviado!");
+      toast.success("E-mail de recuperação de senha enviado!");
     } catch (err) {
       setError(err.message || "Erro ao tentar enviar e-mail de recuperação.");
     } finally {

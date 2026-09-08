@@ -1,7 +1,7 @@
 import { supabase } from './supabase';
 
 export const getNextOSNumber = async (userId) => {
-  if (!userId) return "0001/2026";
+  if (!userId) return `0001/${new Date().getFullYear()}`;
   
   // Use Postgres function to get next number
   const { data, error } = await supabase
@@ -28,6 +28,7 @@ export const saveOS = async (userId, osData) => {
     numero: numeroInt,
     data: osData.os.data,
     status: osData.os.status,
+    tipo_atendimento: osData.os.tipo_atendimento || 'Equipamento',
     cliente_id: osData.cliente?.id || null,
     cliente_snapshot: osData.cliente,
     equipamento: osData.equipamento,
@@ -80,7 +81,8 @@ export const getOSList = async (userId) => {
       os: {
         numero: `${String(row.numero).padStart(4, '0')}/${year}`,
         data: row.data,
-        status: row.status
+        status: row.status,
+        tipo_atendimento: row.tipo_atendimento || 'Equipamento'
       },
       cliente: (() => {
         const snap = row.cliente_snapshot || {};

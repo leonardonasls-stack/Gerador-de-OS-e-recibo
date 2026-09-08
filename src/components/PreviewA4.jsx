@@ -1,4 +1,7 @@
-export default function PreviewA4({ data }) {
+import { useOS } from '../context/OSContext';
+
+export default function PreviewA4() {
+  const { data } = useOS();
   const formatMoney = (value) =>
     Number(value).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
@@ -34,7 +37,9 @@ export default function PreviewA4({ data }) {
           <div className="flex flex-col items-end text-right shrink-0">
             <div className="bg-slate-50 border border-slate-200 p-3 rounded flex flex-col items-end gap-1 shadow-sm">
               <div className="flex items-baseline gap-2 text-brand-navy">
-                <span className="text-xs font-bold tracking-tight uppercase">Ordem de Serviço</span>
+                <span className="text-xs font-bold tracking-tight uppercase">
+                  {data.os?.tipo_atendimento === 'Orçamento' ? 'Orçamento' : (data.os?.tipo_atendimento === 'Balcão' ? 'Venda / Balcão' : 'Ordem de Serviço')}
+                </span>
                 <span className="font-mono text-xl font-bold tracking-tight">Nº {data.os?.numero || '-'}</span>
               </div>
               <div className="flex items-center gap-4 text-xs mt-1">
@@ -85,45 +90,47 @@ export default function PreviewA4({ data }) {
         </div>
 
         {/* 4. Equipamento, Defeito Relatado e Laudo Técnico */}
-        <div className="bg-slate-50 border border-slate-200 rounded p-3 flex flex-col gap-2">
-          <span className="text-[13px] uppercase tracking-wider text-sky-700 flex items-center gap-1.5 font-bold mb-0.5">
-            <span className="material-symbols-outlined text-[15px]">laptop_mac</span>
-            Equipamento & Diagnóstico Técnico
-          </span>
-          
-          <div className="bg-white p-2 rounded border border-slate-200 shadow-sm">
-            <span className="text-slate-500 text-[10px] uppercase">Dispositivo / Equipamento</span>
-            <div className="text-brand-navy font-semibold text-sm">{data.equipamento || '-'}</div>
-          </div>
+        {data.os?.tipo_atendimento !== 'Balcão' && (
+          <div className="bg-slate-50 border border-slate-200 rounded p-3 flex flex-col gap-2">
+            <span className="text-[13px] uppercase tracking-wider text-sky-700 flex items-center gap-1.5 font-bold mb-0.5">
+              <span className="material-symbols-outlined text-[15px]">laptop_mac</span>
+              Equipamento & Diagnóstico Técnico
+            </span>
+            
+            <div className="bg-white p-2 rounded border border-slate-200 shadow-sm">
+              <span className="text-slate-500 text-[10px] uppercase">Dispositivo / Equipamento</span>
+              <div className="text-brand-navy font-semibold text-sm">{data.equipamento || '-'}</div>
+            </div>
 
-          <div className="grid grid-cols-2 gap-2">
-            <div className="bg-white p-2 rounded border border-slate-200 shadow-sm flex flex-col gap-0.5">
-              <span className="text-xs text-slate-600 flex items-center gap-1 font-semibold">
-                <span className="material-symbols-outlined text-[14px] text-rose-500">report_problem</span>
-                Serviço / Relato
-              </span>
-              <p className="text-xs text-slate-800 leading-snug whitespace-pre-wrap">
-                {data.servico || '-'}
-              </p>
+            <div className="grid grid-cols-2 gap-2">
+              <div className="bg-white p-2 rounded border border-slate-200 shadow-sm flex flex-col gap-0.5">
+                <span className="text-xs text-slate-600 flex items-center gap-1 font-semibold">
+                  <span className="material-symbols-outlined text-[14px] text-rose-500">report_problem</span>
+                  Serviço / Relato
+                </span>
+                <p className="text-xs text-slate-800 leading-snug whitespace-pre-wrap">
+                  {data.servico || '-'}
+                </p>
+              </div>
+              <div className="bg-white p-2 rounded border border-slate-200 shadow-sm flex flex-col gap-0.5">
+                <span className="text-xs text-slate-600 flex items-center gap-1 font-semibold">
+                  <span className="material-symbols-outlined text-[14px] text-sky-600">verified</span>
+                  Observações Técnicas Internas
+                </span>
+                <p className="text-xs text-slate-800 leading-snug whitespace-pre-wrap">
+                  {data.obsInterna || '-'}
+                </p>
+              </div>
             </div>
-            <div className="bg-white p-2 rounded border border-slate-200 shadow-sm flex flex-col gap-0.5">
-              <span className="text-xs text-slate-600 flex items-center gap-1 font-semibold">
-                <span className="material-symbols-outlined text-[14px] text-sky-600">verified</span>
-                Observações Técnicas Internas
-              </span>
-              <p className="text-xs text-slate-800 leading-snug whitespace-pre-wrap">
-                {data.obsInterna || '-'}
-              </p>
-            </div>
-          </div>
 
-          <div className="flex items-center justify-between pt-1.5 mt-1 border-t border-slate-200 text-[10px]">
-            <div className="flex items-center gap-1.5">
-              <span className="text-slate-500">Técnico Responsável:</span>
-              <span className="font-semibold text-slate-800">{data.tecnico || '-'}</span>
+            <div className="flex items-center justify-between pt-1.5 mt-1 border-t border-slate-200 text-[10px]">
+              <div className="flex items-center gap-1.5">
+                <span className="text-slate-500">Técnico Responsável:</span>
+                <span className="font-semibold text-slate-800">{data.tecnico || '-'}</span>
+              </div>
             </div>
           </div>
-        </div>
+        )}
 
         {/* 5. Tabela de Serviços e Peças */}
         <div className="flex flex-col gap-1 mt-1">
@@ -195,15 +202,17 @@ export default function PreviewA4({ data }) {
         </div>
 
         {/* 7. Termos de Garantia & Condições Legais */}
-        <div className="bg-slate-100 p-3 rounded border border-slate-200 text-[10px] text-slate-600 leading-snug flex flex-col gap-0.5 mt-1">
-          <span className="text-[10px] uppercase tracking-wider text-slate-800 font-bold flex items-center gap-1">
-            <span className="material-symbols-outlined text-[13px] text-sky-600">shield</span>
-            Termo de Garantia Legal e Responsabilidade Técnica
-          </span>
-          <p>
-            Garantia legal de <strong>90 (noventa) dias</strong> a partir da data de entrega, cobrindo exclusivamente as peças substituídas e serviços executados constantes neste documento. A garantia perde sua validade em caso de mau uso comprovado.
-          </p>
-        </div>
+        {data.os?.tipo_atendimento !== 'Orçamento' && (
+          <div className="bg-slate-100 p-3 rounded border border-slate-200 text-[10px] text-slate-600 leading-snug flex flex-col gap-0.5 mt-1">
+            <span className="text-[10px] uppercase tracking-wider text-slate-800 font-bold flex items-center gap-1">
+              <span className="material-symbols-outlined text-[13px] text-sky-600">shield</span>
+              Termo de Garantia Legal e Responsabilidade Técnica
+            </span>
+            <p>
+              Garantia legal de <strong>90 (noventa) dias</strong> a partir da data de entrega, cobrindo exclusivamente as peças substituídas e serviços executados constantes neste documento. A garantia perde sua validade em caso de mau uso comprovado.
+            </p>
+          </div>
+        )}
 
         {/* 8. Bloco de Assinaturas Formais */}
         <div className="grid grid-cols-2 gap-6 pt-6 pb-2 mt-auto">

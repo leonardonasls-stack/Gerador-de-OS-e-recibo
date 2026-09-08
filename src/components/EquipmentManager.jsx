@@ -2,8 +2,10 @@ import { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { getEquipments, addEquipment, updateEquipment, deleteEquipment, getClients } from '../services/profileService';
 import { toast } from 'react-hot-toast';
+import { useAuth } from '../context/AuthContext';
 
-export default function EquipmentManager({ user, onClose, onEquipmentSelect, isPage }) {
+export default function EquipmentManager({ onClose, onEquipmentSelect, isPage }) {
+  const { user } = useAuth();
   const location = useLocation();
   const isSelectMode = !!onEquipmentSelect;
   const [equipments, setEquipments] = useState([]);
@@ -23,14 +25,17 @@ export default function EquipmentManager({ user, onClose, onEquipmentSelect, isP
   });
 
   useEffect(() => {
-    loadData();
-  }, [user]);
+    const timer = setTimeout(() => {
+      loadData(searchTerm);
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [user, searchTerm]);
 
-  const loadData = async () => {
+  const loadData = async (search = searchTerm) => {
     setLoading(true);
     try {
       const [equipData, clientsData] = await Promise.all([
-        getEquipments(user.id),
+        getEquipments(user.id, search),
         getClients(user.id)
       ]);
       setEquipments(equipData);
@@ -208,7 +213,7 @@ export default function EquipmentManager({ user, onClose, onEquipmentSelect, isP
                       </tr>
                     </thead>
                     <tbody className="text-sm divide-y divide-slate-100">
-                      {equipments.filter(e => e.nome.toLowerCase().includes(searchTerm.toLowerCase()) || (e.clientes?.nome && e.clientes.nome.toLowerCase().includes(searchTerm.toLowerCase()))).map((equip, idx) => {
+                      {equipments.map((equip, idx) => {
                         const isEven = idx % 2 === 0;
                         return (
                           <tr key={equip.id} className={`${isEven ? 'bg-white' : 'bg-slate-50/50'} hover:bg-sky-50/50 transition-colors group`}>

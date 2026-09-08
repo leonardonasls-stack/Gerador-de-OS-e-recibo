@@ -1,8 +1,15 @@
 import { useState, useEffect } from 'react';
 import { X, Search, FileText, CheckCircle, Clock, XCircle } from 'lucide-react';
 import { getOSList } from '../services/osService';
+import { useAuth } from '../context/AuthContext';
+import { useOS } from '../context/OSContext';
+import { useNavigate } from 'react-router-dom';
 
-export default function OSHistory({ user, onClose, onLoadOS, onNewOS, isPage }) {
+export default function OSHistory({ onClose, isPage }) {
+  const { user } = useAuth();
+  const { loadOS, resetToNewOS } = useOS();
+  const navigate = useNavigate();
+
   const [osList, setOsList] = useState([]);
   const [filteredList, setFilteredList] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -91,7 +98,13 @@ export default function OSHistory({ user, onClose, onLoadOS, onNewOS, isPage }) 
           <h2 className="text-lg font-bold text-[#1a5276]">Histórico de OS</h2>
           
           {isPage ? (
-            <button onClick={onNewOS} className="bg-[#1a5276] text-white text-sm font-semibold px-4 py-2 rounded shadow hover:bg-[#154360] transition-colors flex items-center gap-2">
+            <button 
+              onClick={async () => {
+                await resetToNewOS(user.id, user.user_metadata?.display_name);
+                navigate('/os/editor');
+              }} 
+              className="bg-[#1a5276] text-white text-sm font-semibold px-4 py-2 rounded shadow hover:bg-[#154360] transition-colors flex items-center gap-2"
+            >
               <span className="material-symbols-outlined text-[18px]">add_circle</span>
               Cadastrar Nova OS
             </button>
@@ -160,8 +173,12 @@ export default function OSHistory({ user, onClose, onLoadOS, onNewOS, isPage }) 
                     <td className="p-3 text-center">
                       <button 
                         onClick={() => {
-                          onLoadOS(os);
-                          onClose();
+                          loadOS(os);
+                          if (isPage) {
+                            navigate('/os/editor');
+                          } else {
+                            if (onClose) onClose();
+                          }
                         }}
                         className="bg-[#1a5276] text-white text-xs px-3 py-1.5 rounded hover:bg-[#154360]"
                       >

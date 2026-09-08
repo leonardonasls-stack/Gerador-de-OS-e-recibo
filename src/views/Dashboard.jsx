@@ -1,9 +1,21 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '../services/supabase';
 import { toast } from 'react-hot-toast';
+import { useAuth } from '../context/AuthContext';
+import { useOS } from '../context/OSContext';
 
-export default function Dashboard({ data, user, onNewOS }) {
+export default function Dashboard() {
+  const { user } = useAuth();
+  const { resetToNewOS } = useOS();
+  const navigate = useNavigate();
+
+  const handleNewOS = async () => {
+    if (user) {
+      await resetToNewOS(user.id, user.user_metadata?.display_name);
+      navigate('/os/editor');
+    }
+  };
   const [seeding, setSeeding] = useState(false);
   const currentDate = new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
 

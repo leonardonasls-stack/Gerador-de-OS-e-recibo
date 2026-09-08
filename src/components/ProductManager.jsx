@@ -1,8 +1,10 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { getProducts, addProduct, updateProduct, deleteProduct } from '../services/profileService';
 import { toast } from 'react-hot-toast';
+import { useAuth } from '../context/AuthContext';
 
-export default function ProductManager({ user, onClose, onProductSelect, isPage }) {
+export default function ProductManager({ onClose, onProductSelect, isPage }) {
+  const { user } = useAuth();
   const isSelectMode = !!onProductSelect;
   const [products, setProducts] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -20,13 +22,16 @@ export default function ProductManager({ user, onClose, onProductSelect, isPage 
   });
 
   useEffect(() => {
-    loadProducts();
-  }, []);
+    const timer = setTimeout(() => {
+      loadProducts(searchTerm);
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [user, searchTerm]);
 
-  const loadProducts = async () => {
+  const loadProducts = async (search = searchTerm) => {
     setLoading(true);
     try {
-      const data = await getProducts(user.id);
+      const data = await getProducts(user.id, search);
       setProducts(data);
     } catch (error) {
       console.error(error);
@@ -199,7 +204,7 @@ export default function ProductManager({ user, onClose, onProductSelect, isPage 
                         </tr>
                       </thead>
                       <tbody className="text-sm divide-y divide-slate-100">
-                        {products.filter(p => p.nome.toLowerCase().includes(searchTerm.toLowerCase())).map((product, idx) => {
+                        {products.map((product, idx) => {
                           const isEven = idx % 2 === 0;
                           return (
                             <tr key={product.id} className={`${isEven ? 'bg-white' : 'bg-slate-50/50'} hover:bg-sky-50/50 transition-colors group`}>

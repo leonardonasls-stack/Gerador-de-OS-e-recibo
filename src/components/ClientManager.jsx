@@ -2,8 +2,10 @@ import { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { getClients, addClient, updateClient, deleteClient } from '../services/profileService';
 import { toast } from 'react-hot-toast';
+import { useAuth } from '../context/AuthContext';
 
-export default function ClientManager({ user, onClose, onClientSelect, isPage }) {
+export default function ClientManager({ onClose, onClientSelect, isPage }) {
+  const { user } = useAuth();
   const location = useLocation();
   const isSelectMode = !!onClientSelect;
   const [clients, setClients] = useState([]);
@@ -27,22 +29,24 @@ export default function ClientManager({ user, onClose, onClientSelect, isPage })
   });
 
   useEffect(() => {
-    loadClients();
-  }, [user]);
+    const timer = setTimeout(() => {
+      loadClients(searchTerm);
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [user, searchTerm]);
 
   useEffect(() => {
     if (location.state?.openNewClient) {
       resetForm();
       setIsFormOpen(true);
-      // Limpa o state da URL para não reabrir ao dar refresh
       window.history.replaceState({}, document.title);
     }
   }, [location.state]);
 
-  const loadClients = async () => {
+  const loadClients = async (search = searchTerm) => {
     setLoading(true);
     try {
-      const data = await getClients(user.id);
+      const data = await getClients(user.id, search);
       setClients(data);
     } catch (error) {
       console.error(error);
@@ -219,7 +223,7 @@ export default function ClientManager({ user, onClose, onClientSelect, isPage })
                       </tr>
                     </thead>
                     <tbody className="text-sm divide-y divide-slate-100">
-                      {clients.filter(c => c.nome.toLowerCase().includes(searchTerm.toLowerCase()) || (c.documento && c.documento.includes(searchTerm))).map((client, idx) => {
+                      {clients.map((client, idx) => {
                         const isEven = idx % 2 === 0;
                         const fullAddress = `${client.rua || ''}, ${client.numero_end || 'S/N'} - ${client.cidade || ''}`;
                         return (

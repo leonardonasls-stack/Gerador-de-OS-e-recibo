@@ -10,64 +10,43 @@ import ClientManager from './components/ClientManager';
 import ProductManager from './components/ProductManager';
 import EquipmentManager from './components/EquipmentManager';
 import OSHistory from './components/OSHistory';
-import { supabase, logout } from './services/supabase';
-import { saveOS, getNextOSNumber } from './services/osService';
+import { logout } from './services/supabase';
 import { getCompanyData } from './services/profileService';
-import { Toaster, toast } from 'react-hot-toast';
+import { Toaster } from 'react-hot-toast';
+import { useAuth } from './context/AuthContext';
+import { useOS } from './context/OSContext';
 
 function AppContent() {
-  const navigate = useNavigate();
-  const [data, setData] = useState({
-    empresa: {
-      nome: '', endereco: '', cnpj: '', telefone: '', email: ''
-    },
-    os: {
-      numero: '', data: new Date().toISOString().split('T')[0], status: 'Aberta'
-    },
-    cliente: { nome: '', documento: '', contato: '', cep: '', rua: '', numero_end: '', complemento: '', bairro: '', cidade: '' },
-    equipamento: '',
-    servico: '',
-    obsInterna: '',
-    items: [{ id: Date.now(), descricao: '', quantidade: 1, valor: 0.00 }],
-    desconto: 0,
-    tecnico: ''
-  });
-
-  const [user, setUser] = useState(null);
-  const [loadingAuth, setLoadingAuth] = useState(true);
-  const [saving, setSaving] = useState(false);
+  const { user, loadingAuth } = useAuth();
+  const { data, dispatch, resetToNewOS } = useOS();
   
-  // Modals state
   const [showCompanySettings, setShowCompanySettings] = useState(false);
-  const [showClientManager, setShowClientManager] = useState(false);
-  const [showProductManager, setShowProductManager] = useState(false);
-  const [showProductSelector, setShowProductSelector] = useState(false);
-  const [showEquipmentManager, setShowEquipmentManager] = useState(false);
-  const [showOSHistory, setShowOSHistory] = useState(false);
   const [forceOnboarding, setForceOnboarding] = useState(false);
   const [deferredPrompt, setDeferredPrompt] = useState(null);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      handleUserSession(session?.user);
-    });
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      handleUserSession(session?.user);
-    });
-
     const handleBeforeInstallPrompt = (e) => {
       e.preventDefault();
       setDeferredPrompt(e);
     };
     
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-
-    return () => {
-      subscription.unsubscribe();
-      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-    };
+    return () => window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
   }, []);
+
+  useEffect(() => {
+    if (user) {
+      // Load company data for onboarding
+      getCompanyData(user.id).then(companyData => {
+        if (companyData) {
+          dispatch({ type: 'SET_EMPRESA', payload: companyData });
+        } else {
+          setShowCompanySettings(true);
+          setForceOnboarding(true);
+        }
+      }).catch(console.error);
+    }
+  }, [user, dispatch]);
 
   const handleInstallPwa = async () => {
     if (!deferredPrompt) return;
@@ -78,161 +57,10 @@ function AppContent() {
     }
   };
 
-  const handleUserSession = async (currentUser) => {
-      setUser(currentUser);
-      setLoadingAuth(false);
-      
-      if (currentUser) {
-        // Update user name as default tecnico
-        setData(prev => ({ ...prev, tecnico: currentUser.user_metadata?.display_name || '' }));
-
-        // Fetch next OS number
-        try {
-          const nextOS = await getNextOSNumber(currentUser.id);
-          setData(prev => ({ ...prev, os: { ...prev.os, numero: nextOS } }));
-        } catch (error) {
-          console.error("Failed to get next OS number:", error);
-        }
-
-        // Load company data in background
-        try {
-          const companyData = await getCompanyData(currentUser.id);
-          if (companyData) {
-            setData(prev => ({ ...prev, empresa: companyData }));
-          } else {
-            // Se não tem empresa cadastrada, obriga o onboarding
-            setShowCompanySettings(true);
-            setForceOnboarding(true);
-          }
-        } catch (error) {
-          console.error("Failed to load company data:", error);
-        }
-      }
-  };
-
-  const handleChange = (section, field, value) => {
-    setData(prev => ({
-      ...prev,
-      [section]: { ...prev[section], [field]: value }
-    }));
-  };
-
-  const handleClientSelect = (clientData) => {
-    setData(prev => ({
-      ...prev,
-      cliente: clientData
-    }));
-  };
-
-  const handleEquipmentSelect = (equipString) => {
-    setData(prev => ({
-      ...prev,
-      equipamento: equipString
-    }));
-  };
-
-  const handleProductSelect = (productData) => {
-    setData(prev => {
-      if (prev.items.length === 1 && prev.items[0].descricao === '' && prev.items[0].valor === 0) {
-        return {
-          ...prev,
-          items: [{ id: Date.now(), descricao: productData.nome, quantidade: 1, valor: productData.valor }]
-        };
-      }
-      return {
-        ...prev,
-        items: [
-          ...prev.items,
-          { id: Date.now(), descricao: productData.nome, quantidade: 1, valor: productData.valor }
-        ]
-      };
-    });
-  };
-
-  const handleLoadOS = (osData) => {
-    setData(prev => ({
-      ...osData,
-      empresa: prev.empresa, // Preserva a empresa carregada no login
-      os: {
-        numero: osData.os?.numero || '',
-        data: osData.os?.data || '',
-        status: osData.os?.status || 'Aberta'
-      },
-      cliente: osData.cliente || { nome: '', documento: '', contato: '', cep: '', rua: '', numero_end: '', complemento: '', bairro: '', cidade: '' },
-      equipamento: osData.equipamento || '',
-      servico: osData.servico || '',
-      obsInterna: osData.obsInterna || '',
-      items: osData.items?.length > 0 ? osData.items : [{ id: 1, descricao: '', quantidade: 1, valor: 0 }],
-      desconto: osData.desconto || 0,
-      tecnico: osData.tecnico || ''
-    }));
-    toast.success(`OS carregada com sucesso!`);
-    navigate('/os/editor');
-  };
-
-  const handleNewOS = async () => {
-    try {
-      const nextOS = await getNextOSNumber(user.id);
-      setData(prev => ({
-        empresa: prev.empresa, // Keep company data
-        os: { numero: nextOS, data: new Date().toISOString().split('T')[0], status: 'Aberta' },
-        cliente: { nome: '', documento: '', contato: '', cep: '', rua: '', numero_end: '', complemento: '', bairro: '', cidade: '' },
-        equipamento: '',
-        servico: '',
-        obsInterna: '',
-        items: [{ id: Date.now(), descricao: '', quantidade: 1, valor: 0.00 }],
-        desconto: 0,
-        tecnico: user.user_metadata?.display_name || ''
-      }));
-      navigate('/os/editor');
-    } catch (error) {
-      console.error("Failed to generate new OS:", error);
-      toast.error("Erro ao gerar nova OS.");
-    }
-  };
-
   const handleCompanyUpdate = (companyData) => {
-    setData(prev => ({ ...prev, empresa: companyData }));
+    dispatch({ type: 'SET_EMPRESA', payload: companyData });
     setShowCompanySettings(false);
     setForceOnboarding(false);
-  };
-
-  const addItem = () => {
-    setData(prev => ({
-      ...prev,
-      items: [...prev.items, { id: Date.now(), descricao: '', quantidade: 1, valor: 0 }]
-    }));
-  };
-
-  const removeItem = (id) => {
-    setData(prev => ({
-      ...prev,
-      items: prev.items.filter(item => item.id !== id)
-    }));
-  };
-
-  const updateItem = (id, field, value) => {
-    setData(prev => ({
-      ...prev,
-      items: prev.items.map(item => item.id === id ? { ...item, [field]: value } : item)
-    }));
-  };
-
-  const handleSave = async () => {
-    if (!user) {
-      toast.error("Faça login para salvar a OS!");
-      return;
-    }
-    setSaving(true);
-    try {
-      await saveOS(user.id, data);
-      toast.success("OS salva com sucesso!");
-    } catch (error) {
-      console.error(error);
-      toast.error("Erro ao salvar a OS.");
-    } finally {
-      setSaving(false);
-    }
   };
 
   if (loadingAuth) {
@@ -250,20 +78,14 @@ function AppContent() {
       <Routes>
         <Route path="/" element={
           <Layout user={user} onLogout={logout}>
-            <Dashboard data={data} user={user} onNewOS={handleNewOS} />
+            <Dashboard />
           </Layout>
         } />
         
         <Route path="/os" element={
           <Layout user={user} onLogout={logout}>
             <div className="pt-4 h-[calc(100vh-64px)] w-full">
-              <OSHistory 
-                user={user} 
-                onClose={() => {}}
-                onLoadOS={handleLoadOS}
-                onNewOS={handleNewOS}
-                isPage={true}
-              />
+              <OSHistory isPage={true} />
             </div>
           </Layout>
         } />
@@ -271,19 +93,7 @@ function AppContent() {
         <Route path="/os/editor" element={
           <Layout user={user} onLogout={logout}>
             <div className="relative">
-              <OSEditor
-                data={data}
-                onChange={handleChange}
-                onUpdateSimple={(field, val) => setData(prev => ({ ...prev, [field]: val }))}
-                onAddItem={addItem}
-                onRemoveItem={removeItem}
-                onUpdateItem={updateItem}
-                onOpenClientManager={() => setShowClientManager(true)}
-                onOpenProductManager={() => setShowProductSelector(true)}
-                onOpenEquipmentManager={() => setShowEquipmentManager(true)}
-                onOpenHistory={() => setShowOSHistory(true)}
-                onSave={handleSave}
-              />
+              <OSEditor />
             </div>
           </Layout>
         } />
@@ -291,11 +101,7 @@ function AppContent() {
         <Route path="/clientes" element={
           <Layout user={user} onLogout={logout}>
             <div className="pt-4 h-[calc(100vh-64px)] w-full">
-              <ClientManager 
-                user={user} 
-                onClose={() => {}} // Remove close since it's a page now
-                isPage={true}
-              />
+              <ClientManager isPage={true} onClose={() => {}} />
             </div>
           </Layout>
         } />
@@ -303,11 +109,7 @@ function AppContent() {
         <Route path="/produtos" element={
           <Layout user={user} onLogout={logout}>
             <div className="pt-4 h-[calc(100vh-64px)] w-full">
-              <ProductManager 
-                user={user} 
-                onClose={() => {}}
-                isPage={true}
-              />
+              <ProductManager isPage={true} onClose={() => {}} />
             </div>
           </Layout>
         } />
@@ -315,11 +117,7 @@ function AppContent() {
         <Route path="/equipamentos" element={
           <Layout user={user} onLogout={logout}>
             <div className="pt-4 h-[calc(100vh-64px)] w-full">
-              <EquipmentManager 
-                user={user} 
-                onClose={() => {}}
-                isPage={true}
-              />
+              <EquipmentManager isPage={true} onClose={() => {}} />
             </div>
           </Layout>
         } />
@@ -330,7 +128,7 @@ function AppContent() {
               <CompanySettings 
                 user={user} 
                 currentData={data.empresa}
-                onClose={() => navigate('/')}
+                onClose={() => {}}
                 onSaveSuccess={handleCompanyUpdate}
                 forceOnboarding={false}
                 isPage={true}
@@ -352,10 +150,9 @@ function AppContent() {
 
       {/* Hidden print view globally available */}
       <div className="hidden print:block absolute inset-0 bg-white z-[999]">
-        <PreviewA4 data={data} />
+        <PreviewA4 />
       </div>
 
-      {/* Modals that still need to be modals */}
       {showCompanySettings && forceOnboarding && (
         <CompanySettings 
           user={user} 
@@ -363,48 +160,6 @@ function AppContent() {
           onClose={() => {}}
           onSaveSuccess={handleCompanyUpdate}
           forceOnboarding={true}
-        />
-      )}
-
-      {showClientManager && (
-        <div className="fixed inset-0 z-[100] bg-black/50">
-          <ClientManager 
-            user={user} 
-            onClose={() => setShowClientManager(false)}
-            onClientSelect={handleClientSelect}
-          />
-        </div>
-      )}
-
-      {showProductSelector && (
-        <div className="fixed inset-0 z-[100] bg-black/50">
-          <ProductManager 
-            user={user} 
-            onClose={() => setShowProductSelector(false)}
-            onProductSelect={handleProductSelect}
-          />
-        </div>
-      )}
-
-      {showEquipmentManager && (
-        <div className="fixed inset-0 z-[100] bg-black/50">
-          <EquipmentManager 
-            user={user} 
-            onClose={() => setShowEquipmentManager(false)}
-            onEquipmentSelect={handleEquipmentSelect}
-          />
-        </div>
-      )}
-      
-      {showOSHistory && (
-        <OSHistory 
-          user={user}
-          isPage={false}
-          onClose={() => setShowOSHistory(false)}
-          onLoadOS={(os) => {
-            handleLoadOS(os);
-            setShowOSHistory(false);
-          }}
         />
       )}
 

@@ -1,18 +1,32 @@
 import React, { useState } from 'react';
+import { useAuth } from '../context/AuthContext';
+import { useOS } from '../context/OSContext';
+import ClientManager from '../components/ClientManager';
+import ProductManager from '../components/ProductManager';
+import EquipmentManager from '../components/EquipmentManager';
+import OSHistory from '../components/OSHistory';
 
-export default function OSEditor({ 
-  data, 
-  onChange, 
-  onUpdateSimple, 
-  onAddItem, 
-  onRemoveItem, 
-  onUpdateItem, 
-  onOpenClientManager, 
-  onOpenProductManager,
-  onOpenEquipmentManager,
-  onOpenHistory,
-  onSave 
-}) {
+export default function OSEditor() {
+  const { user } = useAuth();
+  const { data, dispatch, saveCurrentOS, loadOS } = useOS();
+
+  // Local Modal States
+  const [showClientManager, setShowClientManager] = useState(false);
+  const [showProductSelector, setShowProductSelector] = useState(false);
+  const [showEquipmentManager, setShowEquipmentManager] = useState(false);
+  const [showOSHistory, setShowOSHistory] = useState(false);
+
+  // Dispatch helpers
+  const onChange = (section, field, value) => {
+    dispatch({ type: 'UPDATE_SECTION_FIELD', payload: { section, field, value } });
+  };
+  const onUpdateSimple = (field, value) => {
+    dispatch({ type: 'UPDATE_SIMPLE_FIELD', payload: { field, value } });
+  };
+  const onAddItem = () => dispatch({ type: 'ADD_ITEM' });
+  const onRemoveItem = (id) => dispatch({ type: 'REMOVE_ITEM', payload: id });
+  const onUpdateItem = (id, field, value) => dispatch({ type: 'UPDATE_ITEM', payload: { id, field, value } });
+
   const formatMoney = (num) => num.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   
   const subtotal = data.items?.reduce((sum, item) => sum + (Number(item.valor) * Number(item.quantidade)), 0) || 0;
@@ -56,7 +70,7 @@ export default function OSEditor({
               <span className="material-symbols-outlined absolute right-1.5 top-1/2 -translate-y-1/2 text-[18px] text-slate-400 pointer-events-none">expand_more</span>
             </div>
           </div>
-          <button onClick={onOpenHistory} className="h-8 px-3 rounded bg-amber-100 hover:bg-amber-200 text-amber-700 font-semibold text-xs flex items-center gap-1 shadow-sm transition-colors" title="Buscar OS Existente">
+          <button onClick={() => setShowOSHistory(true)} className="h-8 px-3 rounded bg-amber-100 hover:bg-amber-200 text-amber-700 font-semibold text-xs flex items-center gap-1 shadow-sm transition-colors" title="Buscar OS Existente">
             <span className="material-symbols-outlined text-[16px]">manage_search</span>
             <span className="hidden sm:inline">Buscar OS</span>
           </button>
@@ -90,6 +104,14 @@ export default function OSEditor({
               <span className="text-[10px] font-semibold uppercase text-slate-400">Data</span>
               <input className="bg-transparent font-mono font-semibold text-sm text-slate-900 outline-none w-full" value={data.os.data} onChange={(e) => onChange('os', 'data', e.target.value)} />
             </div>
+            <div className="flex flex-col bg-slate-50 p-2 rounded border border-slate-100 col-span-2">
+              <span className="text-[10px] font-semibold uppercase text-slate-400">Tipo</span>
+              <select className="bg-transparent font-semibold text-sm text-slate-900 outline-none w-full cursor-pointer" value={data.os.tipo_atendimento || 'Equipamento'} onChange={(e) => onChange('os', 'tipo_atendimento', e.target.value)}>
+                <option value="Equipamento">🛠️ Manutenção (OS)</option>
+                <option value="Balcão">🛒 Venda Balcão</option>
+                <option value="Orçamento">📝 Orçamento</option>
+              </select>
+            </div>
           </div>
         </div>
 
@@ -101,7 +123,7 @@ export default function OSEditor({
                 <span className="w-6 h-6 rounded bg-slate-100 text-slate-900 flex items-center justify-center font-mono text-sm font-bold">1</span>
                 <h2 className="text-lg text-slate-900 font-bold">Dados do Cliente</h2>
               </div>
-              <button onClick={onOpenClientManager} className="text-sky-600 hover:text-sky-700 font-semibold text-sm flex items-center gap-1 transition-colors">
+              <button onClick={() => setShowClientManager(true)} className="text-sky-600 hover:text-sky-700 font-semibold text-sm flex items-center gap-1 transition-colors">
                 <span className="material-symbols-outlined text-[18px]">search</span>
                 <span>Buscar Salvo</span>
               </button>
@@ -122,13 +144,11 @@ export default function OSEditor({
                 <input className="h-8 px-3 rounded bg-white text-slate-900 font-mono text-sm border border-slate-200 focus:outline-none focus:ring-1 focus:ring-sky-500 shadow-sm" value={data.cliente.contato} onChange={(e) => onChange('cliente', 'contato', e.target.value)} />
               </div>
 
-              {/* Endereço - Linha 1 */}
               <div className="flex flex-col gap-1 sm:col-span-2">
                 <label className="text-[10px] font-semibold uppercase text-slate-400">Rua / Logradouro</label>
                 <input className="h-8 px-3 rounded bg-white text-slate-900 text-sm border border-slate-200 focus:outline-none focus:ring-1 focus:ring-sky-500 shadow-sm" value={data.cliente.rua} onChange={(e) => onChange('cliente', 'rua', e.target.value)} />
               </div>
 
-              {/* Endereço - Linha 2 */}
               <div className="flex flex-col gap-1">
                 <label className="text-[10px] font-semibold uppercase text-slate-400">Número</label>
                 <input className="h-8 px-3 rounded bg-white text-slate-900 text-sm border border-slate-200 focus:outline-none focus:ring-1 focus:ring-sky-500 shadow-sm" value={data.cliente.numero_end} onChange={(e) => onChange('cliente', 'numero_end', e.target.value)} />
@@ -138,7 +158,6 @@ export default function OSEditor({
                 <input className="h-8 px-3 rounded bg-white text-slate-900 text-sm border border-slate-200 focus:outline-none focus:ring-1 focus:ring-sky-500 shadow-sm" value={data.cliente.complemento} onChange={(e) => onChange('cliente', 'complemento', e.target.value)} />
               </div>
 
-              {/* Endereço - Linha 3 */}
               <div className="flex flex-col gap-1">
                 <label className="text-[10px] font-semibold uppercase text-slate-400">Bairro</label>
                 <input className="h-8 px-3 rounded bg-white text-slate-900 text-sm border border-slate-200 focus:outline-none focus:ring-1 focus:ring-sky-500 shadow-sm" value={data.cliente.bairro} onChange={(e) => onChange('cliente', 'bairro', e.target.value)} />
@@ -148,7 +167,6 @@ export default function OSEditor({
                 <input className="h-8 px-3 rounded bg-white text-slate-900 text-sm border border-slate-200 focus:outline-none focus:ring-1 focus:ring-sky-500 shadow-sm" value={data.cliente.cidade} onChange={(e) => onChange('cliente', 'cidade', e.target.value)} />
               </div>
               
-              {/* Endereço - Linha 4 */}
               <div className="flex flex-col gap-1 sm:col-span-2">
                 <label className="text-[10px] font-semibold uppercase text-slate-400">CEP</label>
                 <input className="h-8 px-3 rounded bg-white text-slate-900 font-mono text-sm border border-slate-200 focus:outline-none focus:ring-1 focus:ring-sky-500 shadow-sm" value={data.cliente.cep} onChange={(e) => onChange('cliente', 'cep', e.target.value)} />
@@ -157,7 +175,8 @@ export default function OSEditor({
           </div>
 
           {/* Section 2: Equipamento e Diagnóstico */}
-          <div className="bg-white rounded-lg p-6 shadow-sm border border-slate-200 flex flex-col gap-4">
+          {data.os.tipo_atendimento !== 'Balcão' && (
+            <div className="bg-white rounded-lg p-6 shadow-sm border border-slate-200 flex flex-col gap-4">
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
               <div className="flex items-center gap-2">
                 <span className="w-6 h-6 rounded bg-slate-100 text-slate-900 flex items-center justify-center font-mono text-sm font-bold">2</span>
@@ -174,7 +193,7 @@ export default function OSEditor({
                   placeholder="Selecione ou digite um equipamento..."
                 />
                 <button 
-                  onClick={onOpenEquipmentManager}
+                  onClick={() => setShowEquipmentManager(true)}
                   className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-9 flex items-center justify-center text-slate-400 hover:text-sky-600 hover:bg-sky-50 rounded transition-colors"
                   title="Buscar Equipamento Salvo"
                 >
@@ -186,7 +205,8 @@ export default function OSEditor({
               <label className="text-[10px] font-semibold uppercase text-slate-400">Laudo Técnico / Serviços Executados</label>
               <textarea className="p-3 rounded bg-slate-50 focus:bg-white text-slate-900 text-sm border border-slate-200 focus:outline-none focus:ring-1 focus:ring-sky-500 resize-none shadow-sm h-full min-h-[100px]" value={data.servico || ''} onChange={(e) => onUpdateSimple('servico', e.target.value)} placeholder="Descreva os serviços..."></textarea>
             </div>
-          </div>
+            </div>
+          )}
         </div>
 
         {/* Section 3: Itens */}
@@ -197,7 +217,7 @@ export default function OSEditor({
               <h2 className="text-lg text-slate-900 font-bold">Peças & Serviços</h2>
             </div>
             <div className="flex items-center gap-2">
-              <button onClick={onOpenProductManager} className="h-8 px-3 rounded bg-slate-100 text-sky-600 hover:bg-slate-200 font-semibold text-sm flex items-center gap-1 transition-colors">
+              <button onClick={() => setShowProductSelector(true)} className="h-8 px-3 rounded bg-slate-100 text-sky-600 hover:bg-slate-200 font-semibold text-sm flex items-center gap-1 transition-colors">
                 <span className="material-symbols-outlined text-[16px]">inventory_2</span>
                 <span>Buscar no Catálogo</span>
               </button>
@@ -297,12 +317,65 @@ export default function OSEditor({
           <button className="h-9 px-3 rounded text-slate-400 hover:text-red-500 hover:bg-slate-50 font-semibold text-sm transition-colors" type="button">Limpar</button>
         </div>
         <div className="flex items-center gap-2">
-          <button onClick={onSave} className="h-9 px-6 rounded bg-brand-navy hover:bg-[#0a273c] text-white font-semibold text-sm shadow-md transition-colors flex items-center gap-2">
+          <button onClick={() => saveCurrentOS(user?.id)} className="h-9 px-6 rounded bg-brand-navy hover:bg-[#0a273c] text-white font-semibold text-sm shadow-md transition-colors flex items-center gap-2">
             <span className="material-symbols-outlined text-[18px]">check_circle</span>
             <span>Salvar OS</span>
           </button>
         </div>
       </div>
+
+      {/* Modals */}
+      {showClientManager && (
+        <div className="fixed inset-0 z-[100] bg-black/50">
+          <ClientManager 
+            user={user} 
+            onClose={() => setShowClientManager(false)}
+            onClientSelect={(clientData) => {
+              dispatch({ type: 'SET_CLIENTE', payload: clientData });
+              setShowClientManager(false);
+            }}
+          />
+        </div>
+      )}
+
+      {showProductSelector && (
+        <div className="fixed inset-0 z-[100] bg-black/50">
+          <ProductManager 
+            user={user} 
+            onClose={() => setShowProductSelector(false)}
+            onProductSelect={(productData) => {
+              dispatch({ type: 'ADD_PRODUCT_ITEM', payload: productData });
+              setShowProductSelector(false);
+            }}
+          />
+        </div>
+      )}
+
+      {showEquipmentManager && (
+        <div className="fixed inset-0 z-[100] bg-black/50">
+          <EquipmentManager 
+            user={user} 
+            onClose={() => setShowEquipmentManager(false)}
+            onEquipmentSelect={(equipString) => {
+              dispatch({ type: 'SET_EQUIPAMENTO', payload: equipString });
+              setShowEquipmentManager(false);
+            }}
+          />
+        </div>
+      )}
+      
+      {showOSHistory && (
+        <OSHistory 
+          user={user}
+          isPage={false}
+          onClose={() => setShowOSHistory(false)}
+          onLoadOS={(os) => {
+            loadOS(os);
+            setShowOSHistory(false);
+          }}
+        />
+      )}
+
     </div>
   );
 }

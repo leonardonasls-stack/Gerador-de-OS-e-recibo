@@ -40,14 +40,20 @@ export const addClient = async (userId, clientData) => {
   return data.id;
 };
 
-export const getClients = async (userId) => {
+export const getClients = async (userId, searchTerm = '') => {
   if (!userId) throw new Error("Usuário não autenticado");
   
-  const { data, error } = await supabase
+  let query = supabase
     .from('clientes')
     .select('*')
     .eq('user_id', userId)
     .order('nome', { ascending: true });
+    
+  if (searchTerm) {
+    query = query.or(`nome.ilike.%${searchTerm}%,documento.ilike.%${searchTerm}%`);
+  }
+    
+  const { data, error } = await query;
     
   if (error) throw error;
   return data || [];
@@ -81,14 +87,20 @@ export const deleteClient = async (userId, clientId) => {
 // PRODUCTS CRUD
 // ==========================================
 
-export const getProducts = async (userId) => {
+export const getProducts = async (userId, searchTerm = '') => {
   if (!userId) throw new Error("Usuário não autenticado");
   
-  const { data, error } = await supabase
+  let query = supabase
     .from('produtos')
     .select('*')
     .eq('user_id', userId)
     .order('nome', { ascending: true });
+    
+  if (searchTerm) {
+    query = query.ilike('nome', `%${searchTerm}%`);
+  }
+    
+  const { data, error } = await query;
     
   if (error) throw error;
   return data || [];
@@ -139,17 +151,23 @@ export const deleteProduct = async (userId, productId) => {
 // GERENCIAMENTO DE EQUIPAMENTOS
 // ==========================================
 
-export const getEquipments = async (userId) => {
+export const getEquipments = async (userId, searchTerm = '') => {
   if (!userId) throw new Error("Usuário não autenticado");
   
-  const { data, error } = await supabase
+  let query = supabase
     .from('equipamentos')
     .select('*, clientes(nome)')
     .eq('user_id', userId)
     .order('nome', { ascending: true });
     
+  if (searchTerm) {
+    query = query.or(`nome.ilike.%${searchTerm}%,modelo.ilike.%${searchTerm}%,serial.ilike.%${searchTerm}%`);
+  }
+    
+  const { data, error } = await query;
+    
   if (error) throw error;
-  return data;
+  return data || [];
 };
 
 export const addEquipment = async (userId, equipmentData) => {
