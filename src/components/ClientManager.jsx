@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { getClients, addClient, updateClient, deleteClient } from '../services/profileService';
 import { toast } from 'react-hot-toast';
 
 export default function ClientManager({ user, onClose, onClientSelect, isPage }) {
+  const location = useLocation();
   const isSelectMode = !!onClientSelect;
   const [clients, setClients] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -27,7 +29,16 @@ export default function ClientManager({ user, onClose, onClientSelect, isPage })
 
   useEffect(() => {
     loadClients();
-  }, []);
+  }, [user]);
+
+  useEffect(() => {
+    if (location.state?.openNewClient) {
+      resetForm();
+      setIsFormOpen(true);
+      // Limpa o state da URL para não reabrir ao dar refresh
+      window.history.replaceState({}, document.title);
+    }
+  }, [location.state]);
 
   const loadClients = async () => {
     setLoading(true);

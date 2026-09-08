@@ -102,7 +102,7 @@ export default function Dashboard({ data, user }) {
             <span>Exportar XLS</span>
           </button>
 
-          <Link to="/clientes" className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-white border border-slate-200 text-slate-700 text-sm font-semibold shadow-sm hover:bg-slate-50 transition-all">
+          <Link to="/clientes" state={{ openNewClient: true }} className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-white border border-slate-200 text-slate-700 text-sm font-semibold shadow-sm hover:bg-slate-50 transition-all">
             <span className="material-symbols-outlined text-[20px] text-sky-600">person_add</span>
             <span>Novo Cliente</span>
           </Link>
