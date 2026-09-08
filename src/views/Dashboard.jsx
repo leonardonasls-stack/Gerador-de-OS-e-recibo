@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { getOSList } from '../services/osService';
+import { supabase } from '../services/supabase';
 import { toast } from 'react-hot-toast';
 
 export default function Dashboard({ data, user, onNewOS }) {
@@ -18,50 +18,17 @@ export default function Dashboard({ data, user, onNewOS }) {
   const loadMetrics = async () => {
     if (!user) return;
     try {
-      const osList = await getOSList(user.id);
-      
-      const today = new Date().toLocaleDateString('pt-BR');
-      const currentMonth = new Date().getMonth();
-      const currentYear = new Date().getFullYear();
-
-      let abertas = 0;
-      let concluidasHoje = 0;
-      let faturamentoMes = 0;
-      let concluidasMes = 0;
-
-      osList.forEach(os => {
-        const status = os.os?.status || 'Aberta';
-        const dataStr = os.os?.data || ''; // 'DD/MM/YYYY'
-        
-        // Count Abertas/Andamento
-        if (status === 'Aberta' || status === 'Em Andamento') {
-          abertas++;
-        }
-
-        // Count Concluidas Hoje
-        if (status === 'Finalizada' && dataStr === today) {
-          concluidasHoje++;
-        }
-
-        // Faturamento do Mês
-        if (status === 'Finalizada' || status === 'Aprovada') {
-          // Parse DD/MM/YYYY
-          const parts = dataStr.split('/');
-          if (parts.length === 3) {
-            const osMonth = parseInt(parts[1], 10) - 1;
-            const osYear = parseInt(parts[2], 10);
-            
-            if (osMonth === currentMonth && osYear === currentYear) {
-              const totalItens = os.items?.reduce((sum, item) => sum + ((Number(item.val) || 0) * (Number(item.qtd) || 0)), 0) || 0;
-              const desconto = Number(os.desconto) || 0;
-              const total = totalItens - desconto;
-              
-              faturamentoMes += total;
-              concluidasMes++;
-            }
-          }
-        }
+      const { data: metricsData, error } = await supabase.rpc('get_dashboard_metrics', {
+        p_user_id: user.id
       });
+      
+      if (error) throw error;
+      
+      // O Supabase converte automaticamente o retorno JSON da RPC para um objeto JS
+      const abertas = metricsData?.abertas || 0;
+      const concluidasHoje = metricsData?.concluidasHoje || 0;
+      const faturamentoMes = metricsData?.faturamentoMes || 0;
+      const concluidasMes = metricsData?.concluidasMes || 0;
 
       setMetrics({
         abertas,

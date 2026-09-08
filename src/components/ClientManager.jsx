@@ -15,16 +15,15 @@ export default function ClientManager({ user, onClose, onClientSelect, isPage })
   const [currentId, setCurrentId] = useState(null);
   const [formData, setFormData] = useState({
     nome: '',
-    doc: '',
+    documento: '',
     contato: '',
     obs: '',
     cep: '',
     rua: '',
-    numero: '',
+    numero_end: '',
     complemento: '',
     bairro: '',
-    cidade: '',
-    end: '' // usado para fallback
+    cidade: ''
   });
 
   useEffect(() => {
@@ -60,18 +59,17 @@ export default function ClientManager({ user, onClose, onClientSelect, isPage })
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    // Concatenar endereço para o Supabase (que só tem a coluna 'end')
-    let endFormatado = formData.end;
-    if (formData.rua || formData.cidade || formData.bairro) {
-      endFormatado = `${formData.rua || ''}, ${formData.numero || 'S/N'}${formData.complemento ? ' ('+formData.complemento+')' : ''} - ${formData.bairro || ''} - ${formData.cidade || ''} - CEP: ${formData.cep || ''}`;
-    }
-
     const payload = {
       nome: formData.nome,
-      doc: formData.doc,
+      documento: formData.documento,
       contato: formData.contato,
       obs: formData.obs,
-      end: endFormatado
+      cep: formData.cep,
+      rua: formData.rua,
+      numero_end: formData.numero_end,
+      complemento: formData.complemento,
+      bairro: formData.bairro,
+      cidade: formData.cidade
     };
 
     try {
@@ -107,35 +105,17 @@ export default function ClientManager({ user, onClose, onClientSelect, isPage })
     setIsEditing(true);
     setCurrentId(client.id);
     
-    let parsedAddress = {
-      rua: client.end || '',
-      numero: '',
-      complemento: '',
-      bairro: '',
-      cidade: '',
-      cep: ''
-    };
-    
-    // Tenta desmembrar a string de endereço concatenada
-    if (client.end) {
-      const match = client.end.match(/^(.*?), (.*?)(?: \((.*?)\))? - (.*?) - (.*?) - CEP: (.*?)$/);
-      if (match) {
-        parsedAddress.rua = match[1] || '';
-        parsedAddress.numero = match[2] || '';
-        parsedAddress.complemento = match[3] || '';
-        parsedAddress.bairro = match[4] || '';
-        parsedAddress.cidade = match[5] || '';
-        parsedAddress.cep = match[6] || '';
-      }
-    }
-
     setFormData({
       nome: client.nome || '',
-      doc: client.doc || '',
+      documento: client.documento || '',
       contato: client.contato || '',
       obs: client.obs || '',
-      end: client.end || '',
-      ...parsedAddress
+      cep: client.cep || '',
+      rua: client.rua || '',
+      numero_end: client.numero_end || '',
+      complemento: client.complemento || '',
+      bairro: client.bairro || '',
+      cidade: client.cidade || ''
     });
     setIsFormOpen(true);
   };
@@ -148,7 +128,7 @@ export default function ClientManager({ user, onClose, onClientSelect, isPage })
   const resetForm = () => {
     setIsEditing(false);
     setCurrentId(null);
-    setFormData({ nome: '', doc: '', contato: '', obs: '', cep: '', rua: '', numero: '', complemento: '', bairro: '', cidade: '', end: '' });
+    setFormData({ nome: '', documento: '', contato: '', obs: '', cep: '', rua: '', numero_end: '', complemento: '', bairro: '', cidade: '' });
   };
 
   const handleSelect = (client) => {
@@ -239,14 +219,15 @@ export default function ClientManager({ user, onClose, onClientSelect, isPage })
                       </tr>
                     </thead>
                     <tbody className="text-sm divide-y divide-slate-100">
-                      {clients.filter(c => c.nome.toLowerCase().includes(searchTerm.toLowerCase()) || (c.doc && c.doc.includes(searchTerm))).map((client, idx) => {
+                      {clients.filter(c => c.nome.toLowerCase().includes(searchTerm.toLowerCase()) || (c.documento && c.documento.includes(searchTerm))).map((client, idx) => {
                         const isEven = idx % 2 === 0;
+                        const fullAddress = `${client.rua || ''}, ${client.numero_end || 'S/N'} - ${client.cidade || ''}`;
                         return (
                           <tr key={client.id} className={`${isEven ? 'bg-white' : 'bg-slate-50/50'} hover:bg-sky-50/50 transition-colors group`}>
                             <td className="py-3 px-4 font-semibold text-slate-900">{client.nome}</td>
-                            <td className="py-3 px-4 font-mono text-slate-600 text-xs">{client.doc || '-'}</td>
+                            <td className="py-3 px-4 font-mono text-slate-600 text-xs">{client.documento || '-'}</td>
                             <td className="py-3 px-4 font-mono text-slate-600 text-xs">{client.contato || '-'}</td>
-                            <td className="py-3 px-4 text-slate-600 text-xs truncate max-w-[200px]" title={client.end}>{client.end || '-'}</td>
+                            <td className="py-3 px-4 text-slate-600 text-xs truncate max-w-[200px]" title={fullAddress}>{fullAddress !== ', S/N - ' ? fullAddress : '-'}</td>
                             <td className="py-3 px-4 text-right">
                               {isSelectMode ? (
                                 <button 
@@ -310,7 +291,7 @@ export default function ClientManager({ user, onClose, onClientSelect, isPage })
                   <div className="flex flex-col gap-1.5">
                     <label className="text-[11px] font-semibold uppercase text-slate-500">CPF / CNPJ</label>
                     <input 
-                      type="text" name="doc" value={formData.doc} onChange={handleChange}
+                      type="text" name="documento" value={formData.documento} onChange={handleChange}
                       placeholder="000.000.000-00"
                       className="h-10 px-3 rounded-lg bg-white border border-slate-200 text-slate-900 font-mono text-sm focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 shadow-sm transition-all w-full"
                     />
@@ -348,7 +329,7 @@ export default function ClientManager({ user, onClose, onClientSelect, isPage })
                   <div className="flex flex-col gap-1.5">
                     <label className="text-[11px] font-semibold uppercase text-slate-500">Número</label>
                     <input 
-                      type="text" name="numero" value={formData.numero} onChange={handleChange}
+                      type="text" name="numero_end" value={formData.numero_end} onChange={handleChange}
                       placeholder="123"
                       className="h-10 px-3 rounded-lg bg-white border border-slate-200 text-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 shadow-sm transition-all w-full"
                     />

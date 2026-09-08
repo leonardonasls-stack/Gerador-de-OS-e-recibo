@@ -2,8 +2,9 @@ export default function PreviewA4({ data }) {
   const formatMoney = (value) =>
     Number(value).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
-  const subtotal = data.items?.reduce((acc, item) => acc + ((item.qtd || 1) * (item.val || 0)), 0) || 0;
-  const totalGeral = Math.max(0, subtotal - (data.desconto || 0));
+  const subtotal = data.items?.reduce((acc, item) => acc + ((item.quantidade || 1) * (item.valor || 0)), 0) || 0;
+  const valorDesconto = subtotal * (Number(data.desconto || 0) / 100);
+  const totalGeral = Math.max(0, subtotal - valorDesconto);
 
   return (
     <div className="w-full max-w-[210mm] min-h-[297mm] mx-auto bg-white text-slate-800 p-6 flex flex-col justify-between relative shadow-2xl print:shadow-none print:m-0 print:w-full print:max-w-none print:p-6">
@@ -21,11 +22,11 @@ export default function PreviewA4({ data }) {
               CNPJ: {data.empresa?.cnpj || '-'}
             </p>
             <p className="text-sm text-slate-600 leading-snug max-w-sm">
-              {data.empresa?.end || '-'}
+              {data.empresa?.endereco || '-'}
             </p>
             <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-slate-500 mt-1">
-              {data.empresa?.fone && <span>{data.empresa.fone}</span>}
-              {data.empresa?.fone && data.empresa?.email && <span>•</span>}
+              {data.empresa?.telefone && <span>{data.empresa.telefone}</span>}
+              {data.empresa?.telefone && data.empresa?.email && <span>•</span>}
               {data.empresa?.email && <span className="text-sky-600">{data.empresa.email}</span>}
             </div>
           </div>
@@ -66,7 +67,7 @@ export default function PreviewA4({ data }) {
             </div>
             <div className="flex flex-col">
               <span className="text-slate-500 text-[10px] uppercase">CNPJ / CPF</span>
-              <span className="font-mono text-slate-800 text-xs">{data.cliente?.doc || '-'}</span>
+              <span className="font-mono text-slate-800 text-xs">{data.cliente?.documento || '-'}</span>
             </div>
             <div className="flex flex-col">
               <span className="text-slate-500 text-[10px] uppercase">Telefone / WhatsApp</span>
@@ -76,10 +77,8 @@ export default function PreviewA4({ data }) {
               <span className="text-slate-500 text-[10px] uppercase">Endereço de Atendimento</span>
               <span className="text-slate-800 text-xs">
                 {data.cliente?.rua || data.cliente?.cidade || data.cliente?.bairro ? (
-                  `${data.cliente.rua || ''}, ${data.cliente.numero || 'S/N'}${data.cliente.complemento ? ' ('+data.cliente.complemento+')' : ''} - ${data.cliente.bairro || ''} - ${data.cliente.cidade || ''} - CEP: ${data.cliente.cep || ''}`
-                ) : (
-                  data.cliente?.end || '-'
-                )}
+                  `${data.cliente.rua || ''}, ${data.cliente.numero_end || 'S/N'}${data.cliente.complemento ? ' ('+data.cliente.complemento+')' : ''} - ${data.cliente.bairro || ''} - ${data.cliente.cidade || ''} - CEP: ${data.cliente.cep || ''}`
+                ) : '-'}
               </span>
             </div>
           </div>
@@ -150,10 +149,10 @@ export default function PreviewA4({ data }) {
                     <td className="py-1.5 px-2 text-center font-mono text-slate-400">
                       {String(index + 1).padStart(2, '0')}
                     </td>
-                    <td className="py-1.5 px-2 text-slate-800 font-medium">{item.desc || '-'}</td>
-                    <td className="py-1.5 px-2 text-center font-mono text-slate-600">{item.qtd} un</td>
-                    <td className="py-1.5 px-2 text-right font-mono text-slate-500">R$ {formatMoney(item.val)}</td>
-                    <td className="py-1.5 px-2 text-right font-mono font-semibold text-brand-navy">R$ {formatMoney((item.qtd || 1) * (item.val || 0))}</td>
+                    <td className="py-1.5 px-2 text-slate-800 font-medium">{item.descricao || '-'}</td>
+                    <td className="py-1.5 px-2 text-center font-mono text-slate-600">{item.quantidade} un</td>
+                    <td className="py-1.5 px-2 text-right font-mono text-slate-500">R$ {formatMoney(item.valor)}</td>
+                    <td className="py-1.5 px-2 text-right font-mono font-semibold text-brand-navy">R$ {formatMoney((item.quantidade || 1) * (item.valor || 0))}</td>
                   </tr>
                 )) : (
                   <tr>
@@ -184,8 +183,8 @@ export default function PreviewA4({ data }) {
               <span className="font-mono text-slate-800 font-medium">R$ {formatMoney(subtotal)}</span>
             </div>
             <div className="flex items-center justify-between text-xs text-rose-600">
-              <span>Desconto</span>
-              <span className="font-mono font-medium">- R$ {formatMoney(data.desconto || 0)}</span>
+              <span>Desconto ({data.desconto || 0}%)</span>
+              <span className="font-mono font-medium">- R$ {formatMoney(valorDesconto)}</span>
             </div>
             <div className="h-px bg-slate-200 my-0.5"></div>
             <div className="flex items-baseline justify-between">

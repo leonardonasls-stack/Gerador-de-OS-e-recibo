@@ -39,9 +39,9 @@ export const saveOS = async (userId, osData) => {
 
   // Prepara o payload de itens
   const itemsPayload = (osData.items || []).map(item => ({
-    desc: item.desc,
-    qtd: Number(item.qtd) || 1,
-    val: Number(item.val) || 0
+    descricao: item.descricao,
+    quantidade: Number(item.quantidade) || 1,
+    valor: Number(item.valor) || 0
   }));
 
   // Executa tudo na transação atômica do Supabase
@@ -82,13 +82,26 @@ export const getOSList = async (userId) => {
         data: row.data,
         status: row.status
       },
-      cliente: row.cliente_snapshot || { nome: '', doc: '', end: '', contato: '' },
+      cliente: (() => {
+        const snap = row.cliente_snapshot || {};
+        return {
+          nome: snap.nome || '',
+          documento: snap.documento || snap.doc || '',
+          contato: snap.contato || '',
+          cep: snap.cep || '',
+          rua: snap.rua || snap.end || '',
+          numero_end: snap.numero_end || snap.numero || '',
+          complemento: snap.complemento || '',
+          bairro: snap.bairro || '',
+          cidade: snap.cidade || ''
+        };
+      })(),
       equipamento: row.equipamento || '',
       servico: row.servico || '',
       obsInterna: row.obsInterna || '',
       desconto: row.desconto || 0,
       tecnico: row.tecnico || '',
-      items: row.items && row.items.length > 0 ? row.items : [{ id: 1, desc: '', qtd: 1, val: 0 }]
+      items: row.items && row.items.length > 0 ? row.items : [{ id: 1, descricao: '', quantidade: 1, valor: 0 }]
     };
   });
 };

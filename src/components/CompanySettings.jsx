@@ -6,14 +6,14 @@ import { toast } from 'react-hot-toast';
 export default function CompanySettings({ user, currentData, onClose, onSaveSuccess, forceOnboarding, isPage }) {
   const [formData, setFormData] = useState({
     cnpj: '',
-    fone: '',
+    telefone: '',
     email: '',
     rua: '',
     numero: '',
     complemento: '',
     cep: '',
     cidade: '',
-    end: ''
+    endereco: ''
   });
   const [loading, setLoading] = useState(false);
 
@@ -36,9 +36,9 @@ export default function CompanySettings({ user, currentData, onClose, onSaveSucc
     const dataToSave = { 
       nome: formData.nome,
       cnpj: formData.cnpj,
-      fone: formData.fone,
+      telefone: formData.telefone,
       email: formData.email,
-      end: compiledEnd 
+      endereco: compiledEnd 
     };
     try {
       await saveCompanyData(user.id, dataToSave);
@@ -91,7 +91,7 @@ export default function CompanySettings({ user, currentData, onClose, onSaveSucc
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Telefone / WhatsApp</label>
               <input 
-                type="text" name="fone" value={formData.fone || ''} onChange={handleChange}
+                type="text" name="telefone" value={formData.telefone || ''} onChange={handleChange}
                 className="w-full border border-gray-300 rounded p-2 focus:ring-[#1a5276] focus:border-[#1a5276] outline-none"
               />
             </div>

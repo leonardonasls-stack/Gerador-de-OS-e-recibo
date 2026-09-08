@@ -50,18 +50,30 @@ export default function OSHistory({ user, onClose, onLoadOS, onNewOS, isPage }) 
   const getStatusBadge = (status) => {
     const s = status || 'Aberta';
     switch (s) {
-      case 'Aberta': return <span className="flex items-center gap-1 text-xs font-medium px-2 py-1 bg-yellow-100 text-yellow-800 rounded"><Clock size={12}/> Aberta</span>;
+      case 'Aberta': return <span className="flex items-center gap-1 text-xs font-medium px-2 py-1 bg-green-100 text-green-800 rounded"><Clock size={12}/> Aberta</span>;
+      case 'Em Análise': return <span className="flex items-center gap-1 text-xs font-medium px-2 py-1 bg-yellow-100 text-yellow-800 rounded"><Clock size={12}/> Em Análise</span>;
+      case 'Aguardando Orçamento': return <span className="flex items-center gap-1 text-xs font-medium px-2 py-1 bg-orange-100 text-orange-800 rounded"><Clock size={12}/> Aguardando Orçamento</span>;
       case 'Aprovada': return <span className="flex items-center gap-1 text-xs font-medium px-2 py-1 bg-blue-100 text-blue-800 rounded"><CheckCircle size={12}/> Aprovada</span>;
-      case 'Finalizada': return <span className="flex items-center gap-1 text-xs font-medium px-2 py-1 bg-green-100 text-green-800 rounded"><CheckCircle size={12}/> Finalizada</span>;
-      case 'Cancelada': return <span className="flex items-center gap-1 text-xs font-medium px-2 py-1 bg-red-100 text-red-800 rounded"><XCircle size={12}/> Cancelada</span>;
+      case 'Aguardando Peça': return <span className="flex items-center gap-1 text-xs font-medium px-2 py-1 bg-purple-100 text-purple-800 rounded"><Clock size={12}/> Aguardando Peça</span>;
+      case 'Em Execução': return <span className="flex items-center gap-1 text-xs font-medium px-2 py-1 bg-indigo-100 text-indigo-800 rounded"><Clock size={12}/> Em Execução</span>;
+      case 'Concluído': return <span className="flex items-center gap-1 text-xs font-medium px-2 py-1 bg-emerald-100 text-emerald-800 rounded"><CheckCircle size={12}/> Concluído</span>;
       default: return <span className="text-xs font-medium px-2 py-1 bg-gray-100 text-gray-800 rounded">{s}</span>;
     }
   };
 
   const calculateTotal = (os) => {
-    const totalItens = os.items?.reduce((sum, item) => sum + ((Number(item.val) || 0) * (Number(item.qtd) || 0)), 0) || 0;
+    const totalItens = os.items?.reduce((sum, item) => sum + ((Number(item.valor) || 0) * (Number(item.quantidade) || 0)), 0) || 0;
     const desconto = Number(os.desconto) || 0;
     return totalItens - desconto;
+  };
+
+  const formatData = (dataStr) => {
+    if (!dataStr) return '-';
+    if (dataStr.includes('-')) {
+      const [y, m, d] = dataStr.split('-');
+      return `${d}/${m}/${y}`;
+    }
+    return dataStr;
   };
 
   const containerClass = isPage
@@ -108,9 +120,12 @@ export default function OSHistory({ user, onClose, onLoadOS, onNewOS, isPage }) 
           >
             <option value="Todas">Todos os Status</option>
             <option value="Aberta">Aberta</option>
+            <option value="Em Análise">Em Análise</option>
+            <option value="Aguardando Orçamento">Aguardando Orçamento</option>
             <option value="Aprovada">Aprovada</option>
-            <option value="Finalizada">Finalizada</option>
-            <option value="Cancelada">Cancelada</option>
+            <option value="Aguardando Peça">Aguardando Peça</option>
+            <option value="Em Execução">Em Execução</option>
+            <option value="Concluído">Concluído</option>
           </select>
         </div>
 
@@ -138,7 +153,7 @@ export default function OSHistory({ user, onClose, onLoadOS, onNewOS, isPage }) 
                 {filteredList.map(os => (
                   <tr key={os.id} className="border-b border-gray-100 hover:bg-blue-50 transition-colors">
                     <td className="p-3 font-medium text-[#1a5276]">{os.os?.numero || '-'}</td>
-                    <td className="p-3 text-sm">{os.os?.data || '-'}</td>
+                    <td className="p-3 text-sm">{formatData(os.os?.data)}</td>
                     <td className="p-3 text-sm truncate max-w-[200px]">{os.cliente?.nome || '-'}</td>
                     <td className="p-3">{getStatusBadge(os.os?.status)}</td>
                     <td className="p-3 font-medium">R$ {calculateTotal(os).toFixed(2).replace('.', ',')}</td>

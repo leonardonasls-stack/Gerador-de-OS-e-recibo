@@ -16,7 +16,7 @@ export default function ProductManager({ user, onClose, onProductSelect, isPage 
     nome: '',
     custo: 0,
     margem: 0,
-    val: 0
+    valor: 0
   });
 
   useEffect(() => {
@@ -42,10 +42,10 @@ export default function ProductManager({ user, onClose, onProductSelect, isPage 
     setFormData(prev => {
       const next = { ...prev, [name]: numValue };
       if (name === 'custo' || name === 'margem') {
-        next.val = Number((next.custo + (next.custo * (next.margem / 100))).toFixed(2));
-      } else if (name === 'val') {
+        next.valor = Number((next.custo + (next.custo * (next.margem / 100))).toFixed(2));
+      } else if (name === 'valor') {
         if (next.custo > 0) {
-          next.margem = Number((((next.val - next.custo) / next.custo) * 100).toFixed(2));
+          next.margem = Number((((next.valor - next.custo) / next.custo) * 100).toFixed(2));
         }
       }
       return next;
@@ -91,7 +91,7 @@ export default function ProductManager({ user, onClose, onProductSelect, isPage 
       nome: product.nome || '',
       custo: product.custo || 0,
       margem: product.margem || 0,
-      val: product.val || 0
+      valor: product.valor || 0
     });
   };
 
@@ -99,12 +99,12 @@ export default function ProductManager({ user, onClose, onProductSelect, isPage 
     setIsEditing(false);
     setShowForm(false);
     setCurrentId(null);
-    setFormData({ nome: '', custo: 0, margem: 0, val: 0 });
+    setFormData({ nome: '', custo: 0, margem: 0, valor: 0 });
   };
 
   const handleSelect = (product) => {
     if (onProductSelect) {
-      onProductSelect({ desc: product.nome, val: product.val });
+      onProductSelect({ nome: product.nome, valor: product.valor });
       onClose();
     }
   };
@@ -122,33 +122,35 @@ export default function ProductManager({ user, onClose, onProductSelect, isPage 
   return (
     <div className={wrapperClass}>
       <div className={containerClass}>
-        {/* Header */}
-        <div className="flex items-center justify-between p-4 md:p-6 border-b border-slate-200 bg-white shrink-0 rounded-t-xl">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded bg-brand-navy flex items-center justify-center text-white">
-              <span className="material-symbols-outlined text-[20px]">inventory_2</span>
+        {/* Header - Apenas exibe se NÃO for modo de seleção */}
+        {!isSelectMode && (
+          <div className="flex items-center justify-between p-4 md:p-6 border-b border-slate-200 bg-white shrink-0 rounded-t-xl">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded bg-brand-navy flex items-center justify-center text-white">
+                <span className="material-symbols-outlined text-[20px]">inventory_2</span>
+              </div>
+              <div>
+                <h2 className="text-xl font-bold text-slate-900 leading-tight">
+                  Cadastro de Produtos e Peças
+                </h2>
+                <span className="text-xs text-slate-500 font-medium uppercase tracking-wider">
+                  Gerenciamento de Estoque
+                </span>
+              </div>
             </div>
-            <div>
-              <h2 className="text-xl font-bold text-slate-900 leading-tight">
-                {isSelectMode ? 'Buscar no Catálogo' : 'Cadastro de Produtos e Peças'}
-              </h2>
-              <span className="text-xs text-slate-500 font-medium uppercase tracking-wider">
-                {isSelectMode ? 'Selecione um item para adicionar à OS' : 'Gerenciamento de Estoque'}
-              </span>
-            </div>
+            {!isPage && (
+              <button onClick={onClose} className="text-slate-400 hover:text-slate-900 hover:bg-slate-100 p-2 rounded-lg transition-colors">
+                <span className="material-symbols-outlined text-[24px]">close</span>
+              </button>
+            )}
           </div>
-          {!isPage && (
-            <button onClick={onClose} className="text-slate-400 hover:text-slate-900 hover:bg-slate-100 p-2 rounded-lg transition-colors">
-              <span className="material-symbols-outlined text-[24px]">close</span>
-            </button>
-          )}
-        </div>
+        )}
         
         <div className="flex flex-col flex-1 overflow-hidden bg-slate-50">
           {/* List Section */}
           <div className="flex flex-col bg-white w-full h-full">
-            <div className="p-4 border-b border-slate-100 flex flex-col sm:flex-row gap-3 shrink-0">
-              <div className="relative flex-1">
+            <div className="p-4 border-b border-slate-100 flex flex-col sm:flex-row gap-3 shrink-0 items-center">
+              <div className="relative flex-1 w-full">
                 <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-[20px] text-slate-400 pointer-events-none">search</span>
                 <input 
                   type="text"
@@ -156,6 +158,7 @@ export default function ProductManager({ user, onClose, onProductSelect, isPage 
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="w-full h-10 pl-10 pr-3 bg-slate-50 border border-slate-200 rounded-lg text-slate-900 text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all shadow-sm"
+                  autoFocus={isSelectMode}
                 />
               </div>
               {!isSelectMode && (
@@ -165,6 +168,11 @@ export default function ProductManager({ user, onClose, onProductSelect, isPage 
                 >
                   <span className="material-symbols-outlined text-[20px]">add</span>
                   Novo Produto
+                </button>
+              )}
+              {isSelectMode && !isPage && (
+                <button onClick={onClose} className="h-10 px-3 bg-white border border-slate-200 text-slate-500 hover:text-slate-900 hover:bg-slate-50 rounded-lg transition-colors flex items-center shadow-sm">
+                  <span className="material-symbols-outlined text-[20px]">close</span>
                 </button>
               )}
             </div>
@@ -196,7 +204,7 @@ export default function ProductManager({ user, onClose, onProductSelect, isPage 
                           return (
                             <tr key={product.id} className={`${isEven ? 'bg-white' : 'bg-slate-50/50'} hover:bg-sky-50/50 transition-colors group`}>
                               <td className="py-3 px-4 font-semibold text-slate-900">{product.nome}</td>
-                              <td className="py-3 px-4 text-right font-mono font-bold text-sky-700">R$ {formatMoney(product.val)}</td>
+                              <td className="py-3 px-4 text-right font-mono font-bold text-sky-700">R$ {formatMoney(product.valor)}</td>
                               <td className="py-3 px-4 text-right">
                                 {isSelectMode ? (
                                   <button 
@@ -274,7 +282,7 @@ export default function ProductManager({ user, onClose, onProductSelect, isPage 
                   <div className="relative flex items-center">
                     <span className="absolute left-3 font-mono font-bold text-sky-700">R$</span>
                     <input 
-                      type="number" step="0.01" name="val" value={formData.val} onChange={handleChange} required
+                      type="number" step="0.01" name="valor" value={formData.valor || ''} onChange={handleChange} required
                       className="h-12 pl-10 pr-3 rounded-lg bg-sky-50 border border-sky-200 text-sky-700 font-mono text-lg font-bold focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 shadow-sm transition-all w-full"
                     />
                   </div>

@@ -1,7 +1,6 @@
 Directory structure:
 └── Gerador de OS/
     ├── README.md
-    ├── firestore.rules
     ├── index.html
     ├── package.json
     ├── postcss.config.js
@@ -19,6 +18,7 @@ Directory structure:
         ├── components/
         │   ├── ClientManager.jsx
         │   ├── CompanySettings.jsx
+        │   ├── EquipmentManager.jsx
         │   ├── Header.jsx
         │   ├── Layout.jsx
         │   ├── Login.jsx
@@ -42,32 +42,14 @@ Error reading file with 'cp1252': 'charmap' codec can't decode byte 0x8f in posi
 
 
 ================================================
-FILE: firestore.rules
-================================================
-rules_version = '2';
-service cloud.firestore {
-  match /databases/{database}/documents {
-    match /users/{userId}/{document=**} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
-    }
-    match /config/{docId} {
-      allow read, write: if request.auth != null
-        && docId == request.auth.uid + '_osCounter';
-    }
-  }
-}
-
-
-
-================================================
 FILE: index.html
 ================================================
-<!doctype html>
-<html lang="en">
+<!DOCTYPE html>
+<html lang="pt-BR">
   <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta charset="UTF-8">
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gerador de OS</title>
     
     <!-- Google Fonts -->
@@ -76,7 +58,7 @@ FILE: index.html
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
     
     <!-- Material Symbols Outlined -->
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap" rel="stylesheet">
   </head>
   <body>
     <div id="root"></div>
@@ -90,9 +72,9 @@ FILE: index.html
 FILE: package.json
 ================================================
 {
-  "name": "temp-vite",
+  "name": "gerador-os",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite --host",
@@ -139,120 +121,7 @@ export default {
 ================================================
 FILE: supabase_schema.sql
 ================================================
--- Schema inicial para o Gerador de OS (Supabase / PostgreSQL)
-
--- 1. CriaÃ§Ã£o das Tabelas
-
-CREATE TABLE public.empresas (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-    nome TEXT,
-    cnpj TEXT,
-    fone TEXT,
-    email TEXT,
-    "end" TEXT,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
-    UNIQUE(user_id) -- Cada usuÃ¡rio tem apenas 1 empresa
-);
-
-CREATE TABLE public.clientes (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-    nome TEXT NOT NULL,
-    doc TEXT,
-    "end" TEXT,
-    contato TEXT,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
-);
-
-CREATE TABLE public.produtos (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-    nome TEXT NOT NULL,
-    custo NUMERIC(10, 2) DEFAULT 0,
-    margem NUMERIC(10, 2) DEFAULT 0,
-    val NUMERIC(10, 2) DEFAULT 0,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
-);
-
-CREATE TABLE public.os (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-    numero INTEGER NOT NULL,
-    data TEXT,
-    status TEXT,
-    cliente_id UUID REFERENCES public.clientes(id) ON DELETE SET NULL,
-    cliente_snapshot JSONB, -- Salva uma cÃ³pia dos dados do cliente no momento da OS
-    equipamento TEXT,
-    servico TEXT,
-    obsInterna TEXT,
-    desconto NUMERIC(10, 2) DEFAULT 0,
-    tecnico TEXT,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
-);
-
-CREATE TABLE public.os_items (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    os_id UUID NOT NULL REFERENCES public.os(id) ON DELETE CASCADE,
-    "desc" TEXT NOT NULL,
-    qtd NUMERIC(10, 2) DEFAULT 1,
-    val NUMERIC(10, 2) DEFAULT 0,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
-);
-
--- 2. Habilitando RLS (Row Level Security)
-
-ALTER TABLE public.empresas ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.clientes ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.produtos ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.os ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.os_items ENABLE ROW LEVEL SECURITY;
-
--- 3. PolÃ­ticas de SeguranÃ§a (Policies)
--- Garante que cada usuÃ¡rio sÃ³ pode Ler, Inserir, Atualizar e Deletar seus prÃ³prios dados
-
--- Empresas
-CREATE POLICY "UsuÃ¡rios podem gerenciar suas prÃ³prias empresas" 
-ON public.empresas FOR ALL USING (auth.uid() = user_id);
-
--- Clientes
-CREATE POLICY "UsuÃ¡rios podem gerenciar seus prÃ³prios clientes" 
-ON public.clientes FOR ALL USING (auth.uid() = user_id);
-
--- Produtos
-CREATE POLICY "UsuÃ¡rios podem gerenciar seus prÃ³prios produtos" 
-ON public.produtos FOR ALL USING (auth.uid() = user_id);
-
--- OS
-CREATE POLICY "UsuÃ¡rios podem gerenciar suas prÃ³prias OS" 
-ON public.os FOR ALL USING (auth.uid() = user_id);
-
--- OS Items (Depende da OS)
-CREATE POLICY "UsuÃ¡rios podem gerenciar os itens de suas OS" 
-ON public.os_items FOR ALL USING (
-    EXISTS (
-        SELECT 1 FROM public.os
-        WHERE os.id = os_items.os_id AND os.user_id = auth.uid()
-    )
-);
-
--- 4. FunÃ§Ã£o para obter o prÃ³ximo nÃºmero de OS para o usuÃ¡rio
-CREATE OR REPLACE FUNCTION get_next_os_number(p_user_id UUID)
-RETURNS INTEGER
-LANGUAGE plpgsql
-AS $$
-DECLARE
-  next_num INTEGER;
-BEGIN
-  SELECT COALESCE(MAX(numero), 0) + 1 INTO next_num
-  FROM public.os
-  WHERE user_id = p_user_id;
-  
-  RETURN next_num;
-END;
-$$;
-
+Error reading file with 'cp1252': 'charmap' codec can't decode byte 0x8d in position 2771: character maps to <undefined>
 
 
 ================================================
@@ -674,6 +543,7 @@ import Login from './components/Login';
 import CompanySettings from './components/CompanySettings';
 import ClientManager from './components/ClientManager';
 import ProductManager from './components/ProductManager';
+import EquipmentManager from './components/EquipmentManager';
 import OSHistory from './components/OSHistory';
 import { supabase, logout } from './services/supabase';
 import { saveOS, getNextOSNumber } from './services/osService';
@@ -684,16 +554,16 @@ function AppContent() {
   const navigate = useNavigate();
   const [data, setData] = useState({
     empresa: {
-      nome: '', end: '', cnpj: '', fone: '', email: ''
+      nome: '', endereco: '', cnpj: '', telefone: '', email: ''
     },
     os: {
-      numero: '', data: new Date().toLocaleDateString('pt-BR'), status: 'Aberta'
+      numero: '', data: new Date().toISOString().split('T')[0], status: 'Aberta'
     },
-    cliente: { nome: '', doc: '', contato: '', cep: '', rua: '', numero: '', complemento: '', bairro: '', cidade: '', end: '' },
+    cliente: { nome: '', documento: '', contato: '', cep: '', rua: '', numero_end: '', complemento: '', bairro: '', cidade: '' },
     equipamento: '',
     servico: '',
     obsInterna: '',
-    items: [{ id: Date.now(), desc: '', qtd: 1, val: 0.00 }],
+    items: [{ id: Date.now(), descricao: '', quantidade: 1, valor: 0.00 }],
     desconto: 0,
     tecnico: ''
   });
@@ -707,6 +577,7 @@ function AppContent() {
   const [showClientManager, setShowClientManager] = useState(false);
   const [showProductManager, setShowProductManager] = useState(false);
   const [showProductSelector, setShowProductSelector] = useState(false);
+  const [showEquipmentManager, setShowEquipmentManager] = useState(false);
   const [showOSHistory, setShowOSHistory] = useState(false);
   const [forceOnboarding, setForceOnboarding] = useState(false);
   const [deferredPrompt, setDeferredPrompt] = useState(null);
@@ -782,64 +653,54 @@ function AppContent() {
   };
 
   const handleClientSelect = (clientData) => {
-    let parsedData = { ...clientData };
-    
-    // Tenta desmembrar a string de endereÃ§o gerada pelo ClientManager
-    if (parsedData.end && !parsedData.rua) {
-      const match = parsedData.end.match(/^(.*?), (.*?)(?: \((.*?)\))? - (.*?) - (.*?) - CEP: (.*?)$/);
-      if (match) {
-        parsedData.rua = match[1] || '';
-        parsedData.numero = match[2] || '';
-        parsedData.complemento = match[3] || '';
-        parsedData.bairro = match[4] || '';
-        parsedData.cidade = match[5] || '';
-        parsedData.cep = match[6] || '';
-      } else {
-        parsedData.rua = parsedData.end;
-      }
-    }
-
     setData(prev => ({
       ...prev,
-      cliente: parsedData
+      cliente: clientData
+    }));
+  };
+
+  const handleEquipmentSelect = (equipString) => {
+    setData(prev => ({
+      ...prev,
+      equipamento: equipString
     }));
   };
 
   const handleProductSelect = (productData) => {
     setData(prev => {
-      // Se o Ãºnico item da lista for vazio, substitui ele em vez de adicionar outro
-      if (prev.items.length === 1 && prev.items[0].desc === '' && prev.items[0].val === 0) {
+      if (prev.items.length === 1 && prev.items[0].descricao === '' && prev.items[0].valor === 0) {
         return {
           ...prev,
-          items: [{ id: Date.now(), desc: productData.desc, qtd: 1, val: productData.val }]
+          items: [{ id: Date.now(), descricao: productData.nome, quantidade: 1, valor: productData.valor }]
         };
       }
       return {
         ...prev,
         items: [
           ...prev.items,
-          { id: Date.now(), desc: productData.desc, qtd: 1, val: productData.val }
+          { id: Date.now(), descricao: productData.nome, quantidade: 1, valor: productData.valor }
         ]
       };
     });
   };
 
   const handleLoadOS = (osData) => {
-    setData({
+    setData(prev => ({
       ...osData,
+      empresa: prev.empresa, // Preserva a empresa carregada no login
       os: {
         numero: osData.os?.numero || '',
         data: osData.os?.data || '',
         status: osData.os?.status || 'Aberta'
       },
-      cliente: osData.cliente || { nome: '', doc: '', contato: '', cep: '', rua: '', numero: '', complemento: '', bairro: '', cidade: '', end: '' },
+      cliente: osData.cliente || { nome: '', documento: '', contato: '', cep: '', rua: '', numero_end: '', complemento: '', bairro: '', cidade: '' },
       equipamento: osData.equipamento || '',
       servico: osData.servico || '',
       obsInterna: osData.obsInterna || '',
-      items: osData.items?.length > 0 ? osData.items : [{ id: 1, desc: '', qtd: 1, val: 0 }],
+      items: osData.items?.length > 0 ? osData.items : [{ id: 1, descricao: '', quantidade: 1, valor: 0 }],
       desconto: osData.desconto || 0,
       tecnico: osData.tecnico || ''
-    });
+    }));
     toast.success(`OS carregada com sucesso!`);
     navigate('/os/editor');
   };
@@ -849,12 +710,12 @@ function AppContent() {
       const nextOS = await getNextOSNumber(user.id);
       setData(prev => ({
         empresa: prev.empresa, // Keep company data
-        os: { numero: nextOS, data: new Date().toLocaleDateString('pt-BR'), status: 'Aberta' },
-        cliente: { nome: '', doc: '', contato: '', cep: '', rua: '', numero: '', complemento: '', bairro: '', cidade: '', end: '' },
+        os: { numero: nextOS, data: new Date().toISOString().split('T')[0], status: 'Aberta' },
+        cliente: { nome: '', documento: '', contato: '', cep: '', rua: '', numero_end: '', complemento: '', bairro: '', cidade: '' },
         equipamento: '',
         servico: '',
         obsInterna: '',
-        items: [{ id: Date.now(), desc: '', qtd: 1, val: 0.00 }],
+        items: [{ id: Date.now(), descricao: '', quantidade: 1, valor: 0.00 }],
         desconto: 0,
         tecnico: user.user_metadata?.display_name || ''
       }));
@@ -874,7 +735,7 @@ function AppContent() {
   const addItem = () => {
     setData(prev => ({
       ...prev,
-      items: [...prev.items, { id: Date.now(), desc: '', qtd: 1, val: 0 }]
+      items: [...prev.items, { id: Date.now(), descricao: '', quantidade: 1, valor: 0 }]
     }));
   };
 
@@ -954,6 +815,7 @@ function AppContent() {
                 onUpdateItem={updateItem}
                 onOpenClientManager={() => setShowClientManager(true)}
                 onOpenProductManager={() => setShowProductSelector(true)}
+                onOpenEquipmentManager={() => setShowEquipmentManager(true)}
                 onOpenHistory={() => setShowOSHistory(true)}
                 onSave={handleSave}
               />
@@ -977,6 +839,18 @@ function AppContent() {
           <Layout user={user} onLogout={logout}>
             <div className="pt-4 h-[calc(100vh-64px)] w-full">
               <ProductManager 
+                user={user} 
+                onClose={() => {}}
+                isPage={true}
+              />
+            </div>
+          </Layout>
+        } />
+
+        <Route path="/equipamentos" element={
+          <Layout user={user} onLogout={logout}>
+            <div className="pt-4 h-[calc(100vh-64px)] w-full">
+              <EquipmentManager 
                 user={user} 
                 onClose={() => {}}
                 isPage={true}
@@ -1043,6 +917,16 @@ function AppContent() {
             user={user} 
             onClose={() => setShowProductSelector(false)}
             onProductSelect={handleProductSelect}
+          />
+        </div>
+      )}
+
+      {showEquipmentManager && (
+        <div className="fixed inset-0 z-[100] bg-black/50">
+          <EquipmentManager 
+            user={user} 
+            onClose={() => setShowEquipmentManager(false)}
+            onEquipmentSelect={handleEquipmentSelect}
           />
         </div>
       )}
@@ -1213,16 +1097,15 @@ export default function ClientManager({ user, onClose, onClientSelect, isPage })
   const [currentId, setCurrentId] = useState(null);
   const [formData, setFormData] = useState({
     nome: '',
-    doc: '',
+    documento: '',
     contato: '',
     obs: '',
     cep: '',
     rua: '',
-    numero: '',
+    numero_end: '',
     complemento: '',
     bairro: '',
-    cidade: '',
-    end: '' // usado para fallback
+    cidade: ''
   });
 
   useEffect(() => {
@@ -1258,18 +1141,17 @@ export default function ClientManager({ user, onClose, onClientSelect, isPage })
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    // Concatenar endereÃ§o para o Supabase (que sÃ³ tem a coluna 'end')
-    let endFormatado = formData.end;
-    if (formData.rua || formData.cidade || formData.bairro) {
-      endFormatado = `${formData.rua || ''}, ${formData.numero || 'S/N'}${formData.complemento ? ' ('+formData.complemento+')' : ''} - ${formData.bairro || ''} - ${formData.cidade || ''} - CEP: ${formData.cep || ''}`;
-    }
-
     const payload = {
       nome: formData.nome,
-      doc: formData.doc,
+      documento: formData.documento,
       contato: formData.contato,
-      // obs: formData.obs, // Removido temporariamente pois a coluna 'obs' nÃ£o existe na tabela 'clientes' do Supabase
-      end: endFormatado
+      obs: formData.obs,
+      cep: formData.cep,
+      rua: formData.rua,
+      numero_end: formData.numero_end,
+      complemento: formData.complemento,
+      bairro: formData.bairro,
+      cidade: formData.cidade
     };
 
     try {
@@ -1305,35 +1187,17 @@ export default function ClientManager({ user, onClose, onClientSelect, isPage })
     setIsEditing(true);
     setCurrentId(client.id);
     
-    let parsedAddress = {
-      rua: client.end || '',
-      numero: '',
-      complemento: '',
-      bairro: '',
-      cidade: '',
-      cep: ''
-    };
-    
-    // Tenta desmembrar a string de endereÃ§o concatenada
-    if (client.end) {
-      const match = client.end.match(/^(.*?), (.*?)(?: \((.*?)\))? - (.*?) - (.*?) - CEP: (.*?)$/);
-      if (match) {
-        parsedAddress.rua = match[1] || '';
-        parsedAddress.numero = match[2] || '';
-        parsedAddress.complemento = match[3] || '';
-        parsedAddress.bairro = match[4] || '';
-        parsedAddress.cidade = match[5] || '';
-        parsedAddress.cep = match[6] || '';
-      }
-    }
-
     setFormData({
       nome: client.nome || '',
-      doc: client.doc || '',
+      documento: client.documento || '',
       contato: client.contato || '',
       obs: client.obs || '',
-      end: client.end || '',
-      ...parsedAddress
+      cep: client.cep || '',
+      rua: client.rua || '',
+      numero_end: client.numero_end || '',
+      complemento: client.complemento || '',
+      bairro: client.bairro || '',
+      cidade: client.cidade || ''
     });
     setIsFormOpen(true);
   };
@@ -1346,7 +1210,7 @@ export default function ClientManager({ user, onClose, onClientSelect, isPage })
   const resetForm = () => {
     setIsEditing(false);
     setCurrentId(null);
-    setFormData({ nome: '', doc: '', contato: '', obs: '', cep: '', rua: '', numero: '', complemento: '', bairro: '', cidade: '', end: '' });
+    setFormData({ nome: '', documento: '', contato: '', obs: '', cep: '', rua: '', numero_end: '', complemento: '', bairro: '', cidade: '' });
   };
 
   const handleSelect = (client) => {
@@ -1437,14 +1301,15 @@ export default function ClientManager({ user, onClose, onClientSelect, isPage })
                       </tr>
                     </thead>
                     <tbody className="text-sm divide-y divide-slate-100">
-                      {clients.filter(c => c.nome.toLowerCase().includes(searchTerm.toLowerCase()) || (c.doc && c.doc.includes(searchTerm))).map((client, idx) => {
+                      {clients.filter(c => c.nome.toLowerCase().includes(searchTerm.toLowerCase()) || (c.documento && c.documento.includes(searchTerm))).map((client, idx) => {
                         const isEven = idx % 2 === 0;
+                        const fullAddress = `${client.rua || ''}, ${client.numero_end || 'S/N'} - ${client.cidade || ''}`;
                         return (
                           <tr key={client.id} className={`${isEven ? 'bg-white' : 'bg-slate-50/50'} hover:bg-sky-50/50 transition-colors group`}>
                             <td className="py-3 px-4 font-semibold text-slate-900">{client.nome}</td>
-                            <td className="py-3 px-4 font-mono text-slate-600 text-xs">{client.doc || '-'}</td>
+                            <td className="py-3 px-4 font-mono text-slate-600 text-xs">{client.documento || '-'}</td>
                             <td className="py-3 px-4 font-mono text-slate-600 text-xs">{client.contato || '-'}</td>
-                            <td className="py-3 px-4 text-slate-600 text-xs truncate max-w-[200px]" title={client.end}>{client.end || '-'}</td>
+                            <td className="py-3 px-4 text-slate-600 text-xs truncate max-w-[200px]" title={fullAddress}>{fullAddress !== ', S/N - ' ? fullAddress : '-'}</td>
                             <td className="py-3 px-4 text-right">
                               {isSelectMode ? (
                                 <button 
@@ -1508,7 +1373,7 @@ export default function ClientManager({ user, onClose, onClientSelect, isPage })
                   <div className="flex flex-col gap-1.5">
                     <label className="text-[11px] font-semibold uppercase text-slate-500">CPF / CNPJ</label>
                     <input 
-                      type="text" name="doc" value={formData.doc} onChange={handleChange}
+                      type="text" name="documento" value={formData.documento} onChange={handleChange}
                       placeholder="000.000.000-00"
                       className="h-10 px-3 rounded-lg bg-white border border-slate-200 text-slate-900 font-mono text-sm focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 shadow-sm transition-all w-full"
                     />
@@ -1546,7 +1411,7 @@ export default function ClientManager({ user, onClose, onClientSelect, isPage })
                   <div className="flex flex-col gap-1.5">
                     <label className="text-[11px] font-semibold uppercase text-slate-500">NÃºmero</label>
                     <input 
-                      type="text" name="numero" value={formData.numero} onChange={handleChange}
+                      type="text" name="numero_end" value={formData.numero_end} onChange={handleChange}
                       placeholder="123"
                       className="h-10 px-3 rounded-lg bg-white border border-slate-200 text-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 shadow-sm transition-all w-full"
                     />
@@ -1626,14 +1491,14 @@ import { toast } from 'react-hot-toast';
 export default function CompanySettings({ user, currentData, onClose, onSaveSuccess, forceOnboarding, isPage }) {
   const [formData, setFormData] = useState({
     cnpj: '',
-    fone: '',
+    telefone: '',
     email: '',
     rua: '',
     numero: '',
     complemento: '',
     cep: '',
     cidade: '',
-    end: ''
+    endereco: ''
   });
   const [loading, setLoading] = useState(false);
 
@@ -1656,9 +1521,9 @@ export default function CompanySettings({ user, currentData, onClose, onSaveSucc
     const dataToSave = { 
       nome: formData.nome,
       cnpj: formData.cnpj,
-      fone: formData.fone,
+      telefone: formData.telefone,
       email: formData.email,
-      end: compiledEnd 
+      endereco: compiledEnd 
     };
     try {
       await saveCompanyData(user.id, dataToSave);
@@ -1711,7 +1576,7 @@ export default function CompanySettings({ user, currentData, onClose, onSaveSucc
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Telefone / WhatsApp</label>
               <input 
-                type="text" name="fone" value={formData.fone || ''} onChange={handleChange}
+                type="text" name="telefone" value={formData.telefone || ''} onChange={handleChange}
                 className="w-full border border-gray-300 rounded p-2 focus:ring-[#1a5276] focus:border-[#1a5276] outline-none"
               />
             </div>
@@ -1785,6 +1650,359 @@ export default function CompanySettings({ user, currentData, onClose, onSaveSucc
           </button>
         </div>
       </div>
+    </div>
+  );
+}
+
+
+
+================================================
+FILE: src/components/EquipmentManager.jsx
+================================================
+import { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
+import { getEquipments, addEquipment, updateEquipment, deleteEquipment, getClients } from '../services/profileService';
+import { toast } from 'react-hot-toast';
+
+export default function EquipmentManager({ user, onClose, onEquipmentSelect, isPage }) {
+  const location = useLocation();
+  const isSelectMode = !!onEquipmentSelect;
+  const [equipments, setEquipments] = useState([]);
+  const [clients, setClients] = useState([]);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [loading, setLoading] = useState(true);
+  
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [currentId, setCurrentId] = useState(null);
+  const [formData, setFormData] = useState({
+    nome: '',
+    marca: '',
+    n_serie: '',
+    obs: '',
+    cliente_id: ''
+  });
+
+  useEffect(() => {
+    loadData();
+  }, [user]);
+
+  const loadData = async () => {
+    setLoading(true);
+    try {
+      const [equipData, clientsData] = await Promise.all([
+        getEquipments(user.id),
+        getClients(user.id)
+      ]);
+      setEquipments(equipData);
+      setClients(clientsData);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    
+    try {
+      if (isEditing) {
+        await updateEquipment(user.id, currentId, formData);
+        toast.success("Equipamento atualizado!");
+      } else {
+        await addEquipment(user.id, formData);
+        toast.success("Equipamento adicionado!");
+      }
+      resetForm();
+      setIsFormOpen(false);
+      loadData();
+    } catch (error) {
+      console.error(error);
+      toast.error("Erro: " + (error.message || "ao salvar equipamento"));
+    }
+  };
+
+  const handleDelete = async (id) => {
+    if (!window.confirm("Deseja realmente excluir este equipamento?")) return;
+    try {
+      await deleteEquipment(user.id, id);
+      toast.success("Equipamento excluÃ­do!");
+      loadData();
+    } catch (error) {
+      console.error(error);
+      toast.error("Erro ao excluir equipamento.");
+    }
+  };
+
+  const startEdit = (equip) => {
+    setIsEditing(true);
+    setCurrentId(equip.id);
+    
+    setFormData({
+      nome: equip.nome || '',
+      marca: equip.marca || '',
+      n_serie: equip.n_serie || '',
+      obs: equip.obs || '',
+      cliente_id: equip.cliente_id || ''
+    });
+    setIsFormOpen(true);
+  };
+
+  const openNewEquipment = () => {
+    resetForm();
+    setIsFormOpen(true);
+  };
+
+  const resetForm = () => {
+    setIsEditing(false);
+    setCurrentId(null);
+    setFormData({ nome: '', marca: '', n_serie: '', obs: '', cliente_id: '' });
+  };
+
+  const handleSelect = (equip) => {
+    if (onEquipmentSelect) {
+      // Cria uma string combinada para inserir no campo de texto
+      let equipString = equip.nome;
+      if (equip.marca) equipString += ` - ${equip.marca}`;
+      if (equip.n_serie) equipString += ` (S/N: ${equip.n_serie})`;
+      onEquipmentSelect(equipString);
+      onClose();
+    }
+  };
+
+  const containerClass = isPage
+    ? "w-full max-w-[1280px] mx-auto p-4 md:p-8 flex flex-col h-full bg-slate-50 min-h-screen"
+    : "w-full max-w-4xl bg-white rounded-xl shadow-2xl flex flex-col overflow-hidden max-h-[90vh]";
+
+  const wrapperClass = isPage
+    ? "w-full h-full"
+    : "fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center z-[100] p-4";
+
+  return (
+    <div className={wrapperClass}>
+      <div className={containerClass}>
+        
+        {/* Header - Apenas exibe se NÃƒO for modo de seleÃ§Ã£o */}
+        {!isSelectMode && (
+          <div className="flex items-center justify-between p-4 md:p-6 border-b border-slate-200 bg-white shrink-0 rounded-t-xl">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded bg-brand-navy flex items-center justify-center text-white">
+                <span className="material-symbols-outlined text-[20px]">devices</span>
+              </div>
+              <div>
+                <h2 className="text-xl font-bold text-slate-900 leading-tight">
+                  Cadastro de Equipamentos
+                </h2>
+                <span className="text-xs text-slate-500 font-medium uppercase tracking-wider">
+                  Gerenciamento da Base Instalada
+                </span>
+              </div>
+            </div>
+            {!isPage && (
+              <button onClick={onClose} className="text-slate-400 hover:text-slate-900 hover:bg-slate-100 p-2 rounded-lg transition-colors">
+                <span className="material-symbols-outlined text-[24px]">close</span>
+              </button>
+            )}
+          </div>
+        )}
+        
+        <div className="flex flex-col flex-1 overflow-hidden bg-slate-50 min-w-0 w-full">
+          {/* Top Bar: Search & Action */}
+          <div className="p-4 border-b border-slate-200 bg-white flex flex-col sm:flex-row items-center justify-between gap-4 shrink-0">
+            <div className="relative w-full sm:w-96 flex-1">
+              <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-[20px] text-slate-400 pointer-events-none">search</span>
+              <input 
+                type="text"
+                placeholder="Pesquisar por nome ou marca..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full h-10 pl-10 pr-3 bg-slate-50 border border-slate-200 rounded-lg text-slate-900 text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all shadow-sm"
+                autoFocus={isSelectMode}
+              />
+            </div>
+            
+            {!isSelectMode && (
+              <button 
+                onClick={openNewEquipment}
+                className="w-full sm:w-auto h-10 px-4 rounded-lg bg-brand-navy hover:bg-[#0a273c] text-white font-semibold text-sm shadow-md transition-colors flex items-center justify-center gap-2"
+              >
+                <span className="material-symbols-outlined text-[18px]">add_circle</span>
+                <span>Novo Equipamento</span>
+              </button>
+            )}
+            
+            {isSelectMode && !isPage && (
+              <button onClick={onClose} className="h-10 px-3 bg-white border border-slate-200 text-slate-500 hover:text-slate-900 hover:bg-slate-50 rounded-lg transition-colors flex items-center shadow-sm">
+                <span className="material-symbols-outlined text-[20px]">close</span>
+              </button>
+            )}
+          </div>
+
+          {/* List Section (Table) */}
+          <div className="flex-1 overflow-y-auto p-4 md:p-6 bg-slate-50 min-w-0 w-full">
+            {loading ? (
+              <div className="flex items-center justify-center h-32">
+                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-brand-navy"></div>
+              </div>
+            ) : equipments.length === 0 ? (
+              <div className="flex flex-col items-center justify-center h-48 text-slate-400 bg-white rounded-xl border border-slate-200 shadow-sm">
+                <span className="material-symbols-outlined text-4xl mb-2 opacity-50">device_unknown</span>
+                <span className="text-sm">Nenhum equipamento encontrado.</span>
+              </div>
+            ) : (
+              <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden w-full">
+                <div className="overflow-x-auto w-full">
+                  <table className="w-full text-left border-collapse min-w-[700px]">
+                    <thead>
+                      <tr className="bg-slate-100 text-slate-500 text-[10px] font-semibold uppercase tracking-wider">
+                        <th className="py-3 px-4 border-b border-slate-200">Nome / Modelo</th>
+                        <th className="py-3 px-4 border-b border-slate-200">Cliente ProprietÃ¡rio</th>
+                        <th className="py-3 px-4 border-b border-slate-200">Marca</th>
+                        <th className="py-3 px-4 border-b border-slate-200">NÂº SÃ©rie</th>
+                        <th className="py-3 px-4 border-b border-slate-200 text-right">AÃ§Ãµes</th>
+                      </tr>
+                    </thead>
+                    <tbody className="text-sm divide-y divide-slate-100">
+                      {equipments.filter(e => e.nome.toLowerCase().includes(searchTerm.toLowerCase()) || (e.clientes?.nome && e.clientes.nome.toLowerCase().includes(searchTerm.toLowerCase()))).map((equip, idx) => {
+                        const isEven = idx % 2 === 0;
+                        return (
+                          <tr key={equip.id} className={`${isEven ? 'bg-white' : 'bg-slate-50/50'} hover:bg-sky-50/50 transition-colors group`}>
+                            <td className="py-3 px-4 font-semibold text-slate-900">{equip.nome}</td>
+                            <td className="py-3 px-4 text-slate-700 text-xs font-medium">{equip.clientes?.nome || '-'}</td>
+                            <td className="py-3 px-4 text-slate-600 text-xs">{equip.marca || '-'}</td>
+                            <td className="py-3 px-4 font-mono text-slate-600 text-xs">{equip.n_serie || '-'}</td>
+                            <td className="py-3 px-4 text-right">
+                              {isSelectMode ? (
+                                <button 
+                                  onClick={() => handleSelect(equip)}
+                                  className="h-8 px-3 inline-flex items-center justify-center gap-1.5 bg-brand-navy text-white text-xs font-semibold rounded-lg shadow-sm hover:bg-[#0a273c] transition-colors"
+                                >
+                                  <span className="material-symbols-outlined text-[16px]">check_circle</span>
+                                  Usar na OS
+                                </button>
+                              ) : (
+                                <div className="flex items-center justify-end gap-1">
+                                  <button onClick={() => startEdit(equip)} className="w-8 h-8 flex items-center justify-center text-slate-400 hover:text-sky-600 hover:bg-sky-50 rounded-lg transition-colors" title="Editar">
+                                    <span className="material-symbols-outlined text-[18px]">edit</span>
+                                  </button>
+                                  <button onClick={() => handleDelete(equip.id)} className="w-8 h-8 flex items-center justify-center text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors" title="Excluir">
+                                    <span className="material-symbols-outlined text-[18px]">delete</span>
+                                  </button>
+                                </div>
+                              )}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Form Modal */}
+      {isFormOpen && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-[110] p-4">
+          <div className="w-full max-w-xl bg-white rounded-xl shadow-2xl flex flex-col overflow-hidden max-h-[90vh]">
+            <div className="p-4 md:px-6 md:py-4 border-b border-slate-200 bg-white flex justify-between items-center shrink-0">
+              <span className="font-bold text-slate-900 flex items-center gap-2 text-lg">
+                <span className="material-symbols-outlined text-[24px] text-sky-600">
+                  {isEditing ? 'edit_square' : 'add_box'}
+                </span>
+                {isEditing ? 'Editar Equipamento' : 'Novo Equipamento'}
+              </span>
+              <button onClick={() => setIsFormOpen(false)} className="text-slate-400 hover:text-slate-900 hover:bg-slate-100 p-2 rounded-lg transition-colors">
+                <span className="material-symbols-outlined text-[24px]">close</span>
+              </button>
+            </div>
+            
+            <div className="flex-1 overflow-y-auto p-4 md:p-6 bg-slate-50">
+              <form id="equip-form" onSubmit={handleSubmit} className="flex flex-col gap-5">
+                
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-[11px] font-semibold uppercase text-slate-500">Nome / Modelo</label>
+                    <input 
+                      type="text" name="nome" value={formData.nome} onChange={handleChange} required
+                      placeholder="Ex: Notebook Dell Inspiron"
+                      className="h-10 px-3 rounded-lg bg-white border border-slate-200 text-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 shadow-sm transition-all w-full"
+                    />
+                  </div>
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-[11px] font-semibold uppercase text-slate-500">Cliente ProprietÃ¡rio</label>
+                    <select 
+                      name="cliente_id" 
+                      value={formData.cliente_id} 
+                      onChange={handleChange} 
+                      required
+                      className="h-10 px-3 rounded-lg bg-white border border-slate-200 text-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 shadow-sm transition-all w-full"
+                    >
+                      <option value="">Selecione um cliente...</option>
+                      {clients.map(client => (
+                        <option key={client.id} value={client.id}>{client.nome}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+                
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-[11px] font-semibold uppercase text-slate-500">Marca / Fabricante</label>
+                    <input 
+                      type="text" name="marca" value={formData.marca} onChange={handleChange}
+                      placeholder="Ex: Dell"
+                      className="h-10 px-3 rounded-lg bg-white border border-slate-200 text-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 shadow-sm transition-all w-full"
+                    />
+                  </div>
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-[11px] font-semibold uppercase text-slate-500">NÃºmero de SÃ©rie</label>
+                    <input 
+                      type="text" name="n_serie" value={formData.n_serie} onChange={handleChange}
+                      placeholder="Ex: S/N 1234ABCD"
+                      className="h-10 px-3 rounded-lg bg-white border border-slate-200 text-slate-900 font-mono text-sm focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 shadow-sm transition-all w-full"
+                    />
+                  </div>
+                </div>
+                
+                <div className="flex flex-col gap-1.5 pt-2 border-t border-slate-200 mt-2">
+                  <label className="text-[11px] font-semibold uppercase text-amber-600 flex items-center gap-1">
+                    <span className="material-symbols-outlined text-[14px]">visibility_off</span>
+                    ObservaÃ§Ãµes Internas (NÃ£o saem na OS)
+                  </label>
+                  <textarea 
+                    name="obs" value={formData.obs} onChange={handleChange} rows="3"
+                    placeholder="AnotaÃ§Ãµes privadas sobre o estado do equipamento..."
+                    className="p-3 rounded-lg bg-amber-50/50 border border-amber-200 text-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 shadow-sm transition-all w-full resize-none placeholder:text-amber-700/40"
+                  ></textarea>
+                </div>
+
+              </form>
+            </div>
+            
+            <div className="p-4 border-t border-slate-200 bg-white flex justify-end gap-3 shrink-0 rounded-b-xl">
+              <button type="button" onClick={() => setIsFormOpen(false)} className="h-10 px-4 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-sm transition-colors">
+                Cancelar
+              </button>
+              <button 
+                type="submit" form="equip-form"
+                className="h-10 px-6 rounded-lg bg-brand-navy hover:bg-[#0a273c] text-white font-semibold text-sm shadow-md transition-colors flex items-center gap-2"
+              >
+                <span className="material-symbols-outlined text-[18px]">save</span>
+                <span>{isEditing ? 'Atualizar Equipamento' : 'Salvar Equipamento'}</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -2115,18 +2333,30 @@ export default function OSHistory({ user, onClose, onLoadOS, onNewOS, isPage }) 
   const getStatusBadge = (status) => {
     const s = status || 'Aberta';
     switch (s) {
-      case 'Aberta': return <span className="flex items-center gap-1 text-xs font-medium px-2 py-1 bg-yellow-100 text-yellow-800 rounded"><Clock size={12}/> Aberta</span>;
+      case 'Aberta': return <span className="flex items-center gap-1 text-xs font-medium px-2 py-1 bg-green-100 text-green-800 rounded"><Clock size={12}/> Aberta</span>;
+      case 'Em AnÃ¡lise': return <span className="flex items-center gap-1 text-xs font-medium px-2 py-1 bg-yellow-100 text-yellow-800 rounded"><Clock size={12}/> Em AnÃ¡lise</span>;
+      case 'Aguardando OrÃ§amento': return <span className="flex items-center gap-1 text-xs font-medium px-2 py-1 bg-orange-100 text-orange-800 rounded"><Clock size={12}/> Aguardando OrÃ§amento</span>;
       case 'Aprovada': return <span className="flex items-center gap-1 text-xs font-medium px-2 py-1 bg-blue-100 text-blue-800 rounded"><CheckCircle size={12}/> Aprovada</span>;
-      case 'Finalizada': return <span className="flex items-center gap-1 text-xs font-medium px-2 py-1 bg-green-100 text-green-800 rounded"><CheckCircle size={12}/> Finalizada</span>;
-      case 'Cancelada': return <span className="flex items-center gap-1 text-xs font-medium px-2 py-1 bg-red-100 text-red-800 rounded"><XCircle size={12}/> Cancelada</span>;
+      case 'Aguardando PeÃ§a': return <span className="flex items-center gap-1 text-xs font-medium px-2 py-1 bg-purple-100 text-purple-800 rounded"><Clock size={12}/> Aguardando PeÃ§a</span>;
+      case 'Em ExecuÃ§Ã£o': return <span className="flex items-center gap-1 text-xs font-medium px-2 py-1 bg-indigo-100 text-indigo-800 rounded"><Clock size={12}/> Em ExecuÃ§Ã£o</span>;
+      case 'ConcluÃ­do': return <span className="flex items-center gap-1 text-xs font-medium px-2 py-1 bg-emerald-100 text-emerald-800 rounded"><CheckCircle size={12}/> ConcluÃ­do</span>;
       default: return <span className="text-xs font-medium px-2 py-1 bg-gray-100 text-gray-800 rounded">{s}</span>;
     }
   };
 
   const calculateTotal = (os) => {
-    const totalItens = os.items?.reduce((sum, item) => sum + ((Number(item.val) || 0) * (Number(item.qtd) || 0)), 0) || 0;
+    const totalItens = os.items?.reduce((sum, item) => sum + ((Number(item.valor) || 0) * (Number(item.quantidade) || 0)), 0) || 0;
     const desconto = Number(os.desconto) || 0;
     return totalItens - desconto;
+  };
+
+  const formatData = (dataStr) => {
+    if (!dataStr) return '-';
+    if (dataStr.includes('-')) {
+      const [y, m, d] = dataStr.split('-');
+      return `${d}/${m}/${y}`;
+    }
+    return dataStr;
   };
 
   const containerClass = isPage
@@ -2173,9 +2403,12 @@ export default function OSHistory({ user, onClose, onLoadOS, onNewOS, isPage }) 
           >
             <option value="Todas">Todos os Status</option>
             <option value="Aberta">Aberta</option>
+            <option value="Em AnÃ¡lise">Em AnÃ¡lise</option>
+            <option value="Aguardando OrÃ§amento">Aguardando OrÃ§amento</option>
             <option value="Aprovada">Aprovada</option>
-            <option value="Finalizada">Finalizada</option>
-            <option value="Cancelada">Cancelada</option>
+            <option value="Aguardando PeÃ§a">Aguardando PeÃ§a</option>
+            <option value="Em ExecuÃ§Ã£o">Em ExecuÃ§Ã£o</option>
+            <option value="ConcluÃ­do">ConcluÃ­do</option>
           </select>
         </div>
 
@@ -2203,7 +2436,7 @@ export default function OSHistory({ user, onClose, onLoadOS, onNewOS, isPage }) 
                 {filteredList.map(os => (
                   <tr key={os.id} className="border-b border-gray-100 hover:bg-blue-50 transition-colors">
                     <td className="p-3 font-medium text-[#1a5276]">{os.os?.numero || '-'}</td>
-                    <td className="p-3 text-sm">{os.os?.data || '-'}</td>
+                    <td className="p-3 text-sm">{formatData(os.os?.data)}</td>
                     <td className="p-3 text-sm truncate max-w-[200px]">{os.cliente?.nome || '-'}</td>
                     <td className="p-3">{getStatusBadge(os.os?.status)}</td>
                     <td className="p-3 font-medium">R$ {calculateTotal(os).toFixed(2).replace('.', ',')}</td>
@@ -2238,8 +2471,9 @@ export default function PreviewA4({ data }) {
   const formatMoney = (value) =>
     Number(value).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
-  const subtotal = data.items?.reduce((acc, item) => acc + ((item.qtd || 1) * (item.val || 0)), 0) || 0;
-  const totalGeral = Math.max(0, subtotal - (data.desconto || 0));
+  const subtotal = data.items?.reduce((acc, item) => acc + ((item.quantidade || 1) * (item.valor || 0)), 0) || 0;
+  const valorDesconto = subtotal * (Number(data.desconto || 0) / 100);
+  const totalGeral = Math.max(0, subtotal - valorDesconto);
 
   return (
     <div className="w-full max-w-[210mm] min-h-[297mm] mx-auto bg-white text-slate-800 p-6 flex flex-col justify-between relative shadow-2xl print:shadow-none print:m-0 print:w-full print:max-w-none print:p-6">
@@ -2257,11 +2491,11 @@ export default function PreviewA4({ data }) {
               CNPJ: {data.empresa?.cnpj || '-'}
             </p>
             <p className="text-sm text-slate-600 leading-snug max-w-sm">
-              {data.empresa?.end || '-'}
+              {data.empresa?.endereco || '-'}
             </p>
             <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-slate-500 mt-1">
-              {data.empresa?.fone && <span>{data.empresa.fone}</span>}
-              {data.empresa?.fone && data.empresa?.email && <span>â€¢</span>}
+              {data.empresa?.telefone && <span>{data.empresa.telefone}</span>}
+              {data.empresa?.telefone && data.empresa?.email && <span>â€¢</span>}
               {data.empresa?.email && <span className="text-sky-600">{data.empresa.email}</span>}
             </div>
           </div>
@@ -2302,7 +2536,7 @@ export default function PreviewA4({ data }) {
             </div>
             <div className="flex flex-col">
               <span className="text-slate-500 text-[10px] uppercase">CNPJ / CPF</span>
-              <span className="font-mono text-slate-800 text-xs">{data.cliente?.doc || '-'}</span>
+              <span className="font-mono text-slate-800 text-xs">{data.cliente?.documento || '-'}</span>
             </div>
             <div className="flex flex-col">
               <span className="text-slate-500 text-[10px] uppercase">Telefone / WhatsApp</span>
@@ -2312,10 +2546,8 @@ export default function PreviewA4({ data }) {
               <span className="text-slate-500 text-[10px] uppercase">EndereÃ§o de Atendimento</span>
               <span className="text-slate-800 text-xs">
                 {data.cliente?.rua || data.cliente?.cidade || data.cliente?.bairro ? (
-                  `${data.cliente.rua || ''}, ${data.cliente.numero || 'S/N'}${data.cliente.complemento ? ' ('+data.cliente.complemento+')' : ''} - ${data.cliente.bairro || ''} - ${data.cliente.cidade || ''} - CEP: ${data.cliente.cep || ''}`
-                ) : (
-                  data.cliente?.end || '-'
-                )}
+                  `${data.cliente.rua || ''}, ${data.cliente.numero_end || 'S/N'}${data.cliente.complemento ? ' ('+data.cliente.complemento+')' : ''} - ${data.cliente.bairro || ''} - ${data.cliente.cidade || ''} - CEP: ${data.cliente.cep || ''}`
+                ) : '-'}
               </span>
             </div>
           </div>
@@ -2386,10 +2618,10 @@ export default function PreviewA4({ data }) {
                     <td className="py-1.5 px-2 text-center font-mono text-slate-400">
                       {String(index + 1).padStart(2, '0')}
                     </td>
-                    <td className="py-1.5 px-2 text-slate-800 font-medium">{item.desc || '-'}</td>
-                    <td className="py-1.5 px-2 text-center font-mono text-slate-600">{item.qtd} un</td>
-                    <td className="py-1.5 px-2 text-right font-mono text-slate-500">R$ {formatMoney(item.val)}</td>
-                    <td className="py-1.5 px-2 text-right font-mono font-semibold text-brand-navy">R$ {formatMoney((item.qtd || 1) * (item.val || 0))}</td>
+                    <td className="py-1.5 px-2 text-slate-800 font-medium">{item.descricao || '-'}</td>
+                    <td className="py-1.5 px-2 text-center font-mono text-slate-600">{item.quantidade} un</td>
+                    <td className="py-1.5 px-2 text-right font-mono text-slate-500">R$ {formatMoney(item.valor)}</td>
+                    <td className="py-1.5 px-2 text-right font-mono font-semibold text-brand-navy">R$ {formatMoney((item.quantidade || 1) * (item.valor || 0))}</td>
                   </tr>
                 )) : (
                   <tr>
@@ -2420,8 +2652,8 @@ export default function PreviewA4({ data }) {
               <span className="font-mono text-slate-800 font-medium">R$ {formatMoney(subtotal)}</span>
             </div>
             <div className="flex items-center justify-between text-xs text-rose-600">
-              <span>Desconto</span>
-              <span className="font-mono font-medium">- R$ {formatMoney(data.desconto || 0)}</span>
+              <span>Desconto ({data.desconto || 0}%)</span>
+              <span className="font-mono font-medium">- R$ {formatMoney(valorDesconto)}</span>
             </div>
             <div className="h-px bg-slate-200 my-0.5"></div>
             <div className="flex items-baseline justify-between">
@@ -2509,7 +2741,7 @@ export default function ProductManager({ user, onClose, onProductSelect, isPage 
     nome: '',
     custo: 0,
     margem: 0,
-    val: 0
+    valor: 0
   });
 
   useEffect(() => {
@@ -2535,10 +2767,10 @@ export default function ProductManager({ user, onClose, onProductSelect, isPage 
     setFormData(prev => {
       const next = { ...prev, [name]: numValue };
       if (name === 'custo' || name === 'margem') {
-        next.val = Number((next.custo + (next.custo * (next.margem / 100))).toFixed(2));
-      } else if (name === 'val') {
+        next.valor = Number((next.custo + (next.custo * (next.margem / 100))).toFixed(2));
+      } else if (name === 'valor') {
         if (next.custo > 0) {
-          next.margem = Number((((next.val - next.custo) / next.custo) * 100).toFixed(2));
+          next.margem = Number((((next.valor - next.custo) / next.custo) * 100).toFixed(2));
         }
       }
       return next;
@@ -2584,7 +2816,7 @@ export default function ProductManager({ user, onClose, onProductSelect, isPage 
       nome: product.nome || '',
       custo: product.custo || 0,
       margem: product.margem || 0,
-      val: product.val || 0
+      valor: product.valor || 0
     });
   };
 
@@ -2592,12 +2824,12 @@ export default function ProductManager({ user, onClose, onProductSelect, isPage 
     setIsEditing(false);
     setShowForm(false);
     setCurrentId(null);
-    setFormData({ nome: '', custo: 0, margem: 0, val: 0 });
+    setFormData({ nome: '', custo: 0, margem: 0, valor: 0 });
   };
 
   const handleSelect = (product) => {
     if (onProductSelect) {
-      onProductSelect({ desc: product.nome, val: product.val });
+      onProductSelect({ nome: product.nome, valor: product.valor });
       onClose();
     }
   };
@@ -2615,33 +2847,35 @@ export default function ProductManager({ user, onClose, onProductSelect, isPage 
   return (
     <div className={wrapperClass}>
       <div className={containerClass}>
-        {/* Header */}
-        <div className="flex items-center justify-between p-4 md:p-6 border-b border-slate-200 bg-white shrink-0 rounded-t-xl">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded bg-brand-navy flex items-center justify-center text-white">
-              <span className="material-symbols-outlined text-[20px]">inventory_2</span>
+        {/* Header - Apenas exibe se NÃƒO for modo de seleÃ§Ã£o */}
+        {!isSelectMode && (
+          <div className="flex items-center justify-between p-4 md:p-6 border-b border-slate-200 bg-white shrink-0 rounded-t-xl">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded bg-brand-navy flex items-center justify-center text-white">
+                <span className="material-symbols-outlined text-[20px]">inventory_2</span>
+              </div>
+              <div>
+                <h2 className="text-xl font-bold text-slate-900 leading-tight">
+                  Cadastro de Produtos e PeÃ§as
+                </h2>
+                <span className="text-xs text-slate-500 font-medium uppercase tracking-wider">
+                  Gerenciamento de Estoque
+                </span>
+              </div>
             </div>
-            <div>
-              <h2 className="text-xl font-bold text-slate-900 leading-tight">
-                {isSelectMode ? 'Buscar no CatÃ¡logo' : 'Cadastro de Produtos e PeÃ§as'}
-              </h2>
-              <span className="text-xs text-slate-500 font-medium uppercase tracking-wider">
-                {isSelectMode ? 'Selecione um item para adicionar Ã  OS' : 'Gerenciamento de Estoque'}
-              </span>
-            </div>
+            {!isPage && (
+              <button onClick={onClose} className="text-slate-400 hover:text-slate-900 hover:bg-slate-100 p-2 rounded-lg transition-colors">
+                <span className="material-symbols-outlined text-[24px]">close</span>
+              </button>
+            )}
           </div>
-          {!isPage && (
-            <button onClick={onClose} className="text-slate-400 hover:text-slate-900 hover:bg-slate-100 p-2 rounded-lg transition-colors">
-              <span className="material-symbols-outlined text-[24px]">close</span>
-            </button>
-          )}
-        </div>
+        )}
         
         <div className="flex flex-col flex-1 overflow-hidden bg-slate-50">
           {/* List Section */}
           <div className="flex flex-col bg-white w-full h-full">
-            <div className="p-4 border-b border-slate-100 flex flex-col sm:flex-row gap-3 shrink-0">
-              <div className="relative flex-1">
+            <div className="p-4 border-b border-slate-100 flex flex-col sm:flex-row gap-3 shrink-0 items-center">
+              <div className="relative flex-1 w-full">
                 <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-[20px] text-slate-400 pointer-events-none">search</span>
                 <input 
                   type="text"
@@ -2649,6 +2883,7 @@ export default function ProductManager({ user, onClose, onProductSelect, isPage 
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="w-full h-10 pl-10 pr-3 bg-slate-50 border border-slate-200 rounded-lg text-slate-900 text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all shadow-sm"
+                  autoFocus={isSelectMode}
                 />
               </div>
               {!isSelectMode && (
@@ -2658,6 +2893,11 @@ export default function ProductManager({ user, onClose, onProductSelect, isPage 
                 >
                   <span className="material-symbols-outlined text-[20px]">add</span>
                   Novo Produto
+                </button>
+              )}
+              {isSelectMode && !isPage && (
+                <button onClick={onClose} className="h-10 px-3 bg-white border border-slate-200 text-slate-500 hover:text-slate-900 hover:bg-slate-50 rounded-lg transition-colors flex items-center shadow-sm">
+                  <span className="material-symbols-outlined text-[20px]">close</span>
                 </button>
               )}
             </div>
@@ -2689,7 +2929,7 @@ export default function ProductManager({ user, onClose, onProductSelect, isPage 
                           return (
                             <tr key={product.id} className={`${isEven ? 'bg-white' : 'bg-slate-50/50'} hover:bg-sky-50/50 transition-colors group`}>
                               <td className="py-3 px-4 font-semibold text-slate-900">{product.nome}</td>
-                              <td className="py-3 px-4 text-right font-mono font-bold text-sky-700">R$ {formatMoney(product.val)}</td>
+                              <td className="py-3 px-4 text-right font-mono font-bold text-sky-700">R$ {formatMoney(product.valor)}</td>
                               <td className="py-3 px-4 text-right">
                                 {isSelectMode ? (
                                   <button 
@@ -2767,7 +3007,7 @@ export default function ProductManager({ user, onClose, onProductSelect, isPage 
                   <div className="relative flex items-center">
                     <span className="absolute left-3 font-mono font-bold text-sky-700">R$</span>
                     <input 
-                      type="number" step="0.01" name="val" value={formData.val} onChange={handleChange} required
+                      type="number" step="0.01" name="valor" value={formData.valor || ''} onChange={handleChange} required
                       className="h-12 pl-10 pr-3 rounded-lg bg-sky-50 border border-sky-200 text-sky-700 font-mono text-lg font-bold focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 shadow-sm transition-all w-full"
                     />
                   </div>
@@ -2825,6 +3065,11 @@ export default function Sidebar({ user, onLogout, isOpen, onClose }) {
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.75" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
       </svg>
     ), label: 'Clientes' },
+    { path: '/equipamentos', icon: (
+      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.75" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z"></path>
+      </svg>
+    ), label: 'Equipamentos' },
     { path: '/relatorios', icon: (
       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.75" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
@@ -3074,57 +3319,38 @@ export const saveOS = async (userId, osData) => {
   const numeroInt = parseInt(String(osData.os.numero).split('/')[0], 10) || 1;
   const isEditing = !!osData.id; 
   
-  // 1. Upsert na tabela OS
+  // Prepara o payload principal da OS
   const osPayload = {
-    user_id: userId,
+    ...(isEditing ? { id: osData.id } : {}),
     numero: numeroInt,
     data: osData.os.data,
     status: osData.os.status,
-    cliente_id: osData.cliente.id || null,
+    cliente_id: osData.cliente?.id || null,
     cliente_snapshot: osData.cliente,
     equipamento: osData.equipamento,
     servico: osData.servico,
-    // obsInterna: osData.obsInterna, // Removido temporariamente pois a coluna 'obsInterna' nÃ£o existe na tabela 'os' do Supabase
+    obsInterna: osData.obsInterna,
     desconto: Number(osData.desconto) || 0,
     tecnico: osData.tecnico
   };
 
-  let osId = osData.id;
+  // Prepara o payload de itens
+  const itemsPayload = (osData.items || []).map(item => ({
+    descricao: item.descricao,
+    quantidade: Number(item.quantidade) || 1,
+    valor: Number(item.valor) || 0
+  }));
 
-  if (isEditing) {
-    const { error } = await supabase
-      .from('os')
-      .update(osPayload)
-      .eq('id', osId)
-      .eq('user_id', userId);
-    if (error) throw error;
-  } else {
-    const { data, error } = await supabase
-      .from('os')
-      .insert([osPayload])
-      .select()
-      .single();
-    if (error) throw error;
-    osId = data.id;
-  }
+  // Executa tudo na transaÃ§Ã£o atÃ´mica do Supabase
+  const { data, error } = await supabase.rpc('save_os_transaction', {
+    p_user_id: userId,
+    p_os_data: osPayload,
+    p_items_data: itemsPayload
+  });
 
-  // 2. Sincronizar Items (Deletar antigos e inserir novos)
-  if (isEditing) {
-    await supabase.from('os_items').delete().eq('os_id', osId);
-  }
-
-  if (osData.items && osData.items.length > 0) {
-    const itemsPayload = osData.items.map(item => ({
-      os_id: osId,
-      desc: item.desc,
-      qtd: Number(item.qtd) || 1,
-      val: Number(item.val) || 0
-    }));
-    const { error: itemsError } = await supabase.from('os_items').insert(itemsPayload);
-    if (itemsError) throw itemsError;
-  }
+  if (error) throw error;
   
-  return osId;
+  return data.os_id;
 };
 
 export const getOSList = async (userId) => {
@@ -3153,13 +3379,26 @@ export const getOSList = async (userId) => {
         data: row.data,
         status: row.status
       },
-      cliente: row.cliente_snapshot || { nome: '', doc: '', end: '', contato: '' },
+      cliente: (() => {
+        const snap = row.cliente_snapshot || {};
+        return {
+          nome: snap.nome || '',
+          documento: snap.documento || snap.doc || '',
+          contato: snap.contato || '',
+          cep: snap.cep || '',
+          rua: snap.rua || snap.end || '',
+          numero_end: snap.numero_end || snap.numero || '',
+          complemento: snap.complemento || '',
+          bairro: snap.bairro || '',
+          cidade: snap.cidade || ''
+        };
+      })(),
       equipamento: row.equipamento || '',
       servico: row.servico || '',
       obsInterna: row.obsInterna || '',
       desconto: row.desconto || 0,
       tecnico: row.tecnico || '',
-      items: row.items && row.items.length > 0 ? row.items : [{ id: 1, desc: '', qtd: 1, val: 0 }]
+      items: row.items && row.items.length > 0 ? row.items : [{ id: 1, descricao: '', quantidade: 1, valor: 0 }]
     };
   });
 };
@@ -3273,7 +3512,7 @@ export const addProduct = async (userId, productData) => {
     .insert([{ 
       user_id: userId, 
       ...productData,
-      val: Number(productData.val) || 0
+      valor: Number(productData.valor) || 0
     }]);
     
   if (error) throw error;
@@ -3286,7 +3525,7 @@ export const updateProduct = async (userId, productId, productData) => {
     .from('produtos')
     .update({ 
       ...productData,
-      val: Number(productData.val) || 0 
+      valor: Number(productData.valor) || 0 
     })
     .eq('id', productId)
     .eq('user_id', userId);
@@ -3306,6 +3545,62 @@ export const deleteProduct = async (userId, productId) => {
   if (error) throw error;
 };
 
+// ==========================================
+// GERENCIAMENTO DE EQUIPAMENTOS
+// ==========================================
+
+export const getEquipments = async (userId) => {
+  if (!userId) throw new Error("UsuÃ¡rio nÃ£o autenticado");
+  
+  const { data, error } = await supabase
+    .from('equipamentos')
+    .select('*, clientes(nome)')
+    .eq('user_id', userId)
+    .order('nome', { ascending: true });
+    
+  if (error) throw error;
+  return data;
+};
+
+export const addEquipment = async (userId, equipmentData) => {
+  if (!userId) throw new Error("UsuÃ¡rio nÃ£o autenticado");
+  
+  const { data, error } = await supabase
+    .from('equipamentos')
+    .insert([{ user_id: userId, ...equipmentData }])
+    .select()
+    .single();
+    
+  if (error) throw error;
+  return data;
+};
+
+export const updateEquipment = async (userId, equipmentId, equipmentData) => {
+  if (!userId) throw new Error("UsuÃ¡rio nÃ£o autenticado");
+  
+  const { data, error } = await supabase
+    .from('equipamentos')
+    .update(equipmentData)
+    .eq('id', equipmentId)
+    .eq('user_id', userId)
+    .select()
+    .single();
+    
+  if (error) throw error;
+  return data;
+};
+
+export const deleteEquipment = async (userId, equipmentId) => {
+  if (!userId) throw new Error("UsuÃ¡rio nÃ£o autenticado");
+  
+  const { error } = await supabase
+    .from('equipamentos')
+    .delete()
+    .eq('id', equipmentId)
+    .eq('user_id', userId);
+    
+  if (error) throw error;
+};
 
 
 
@@ -3316,6 +3611,10 @@ import { createClient } from '@supabase/supabase-js';
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+if (!supabaseUrl || !supabaseAnonKey) {
+  throw new Error('[Supabase] VariÃ¡veis de ambiente VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY sÃ£o obrigatÃ³rias.');
+}
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
@@ -3355,7 +3654,7 @@ FILE: src/views/Dashboard.jsx
 ================================================
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { getOSList } from '../services/osService';
+import { supabase } from '../services/supabase';
 import { toast } from 'react-hot-toast';
 
 export default function Dashboard({ data, user, onNewOS }) {
@@ -3373,50 +3672,17 @@ export default function Dashboard({ data, user, onNewOS }) {
   const loadMetrics = async () => {
     if (!user) return;
     try {
-      const osList = await getOSList(user.id);
-      
-      const today = new Date().toLocaleDateString('pt-BR');
-      const currentMonth = new Date().getMonth();
-      const currentYear = new Date().getFullYear();
-
-      let abertas = 0;
-      let concluidasHoje = 0;
-      let faturamentoMes = 0;
-      let concluidasMes = 0;
-
-      osList.forEach(os => {
-        const status = os.os?.status || 'Aberta';
-        const dataStr = os.os?.data || ''; // 'DD/MM/YYYY'
-        
-        // Count Abertas/Andamento
-        if (status === 'Aberta' || status === 'Em Andamento') {
-          abertas++;
-        }
-
-        // Count Concluidas Hoje
-        if (status === 'Finalizada' && dataStr === today) {
-          concluidasHoje++;
-        }
-
-        // Faturamento do MÃªs
-        if (status === 'Finalizada' || status === 'Aprovada') {
-          // Parse DD/MM/YYYY
-          const parts = dataStr.split('/');
-          if (parts.length === 3) {
-            const osMonth = parseInt(parts[1], 10) - 1;
-            const osYear = parseInt(parts[2], 10);
-            
-            if (osMonth === currentMonth && osYear === currentYear) {
-              const totalItens = os.items?.reduce((sum, item) => sum + ((Number(item.val) || 0) * (Number(item.qtd) || 0)), 0) || 0;
-              const desconto = Number(os.desconto) || 0;
-              const total = totalItens - desconto;
-              
-              faturamentoMes += total;
-              concluidasMes++;
-            }
-          }
-        }
+      const { data: metricsData, error } = await supabase.rpc('get_dashboard_metrics', {
+        p_user_id: user.id
       });
+      
+      if (error) throw error;
+      
+      // O Supabase converte automaticamente o retorno JSON da RPC para um objeto JS
+      const abertas = metricsData?.abertas || 0;
+      const concluidasHoje = metricsData?.concluidasHoje || 0;
+      const faturamentoMes = metricsData?.faturamentoMes || 0;
+      const concluidasMes = metricsData?.concluidasMes || 0;
 
       setMetrics({
         abertas,
@@ -3540,5 +3806,5 @@ export default function Dashboard({ data, user, onNewOS }) {
 ================================================
 FILE: src/views/OSEditor.jsx
 ================================================
-Error reading file with 'cp1252': 'charmap' codec can't decode byte 0x8f in position 2583: character maps to <undefined>
+Error reading file with 'cp1252': 'charmap' codec can't decode byte 0x8f in position 2617: character maps to <undefined>
 

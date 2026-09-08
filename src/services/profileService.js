@@ -102,7 +102,7 @@ export const addProduct = async (userId, productData) => {
     .insert([{ 
       user_id: userId, 
       ...productData,
-      val: Number(productData.val) || 0
+      valor: Number(productData.valor) || 0
     }]);
     
   if (error) throw error;
@@ -115,7 +115,7 @@ export const updateProduct = async (userId, productId, productData) => {
     .from('produtos')
     .update({ 
       ...productData,
-      val: Number(productData.val) || 0 
+      valor: Number(productData.valor) || 0 
     })
     .eq('id', productId)
     .eq('user_id', userId);
@@ -135,3 +135,59 @@ export const deleteProduct = async (userId, productId) => {
   if (error) throw error;
 };
 
+// ==========================================
+// GERENCIAMENTO DE EQUIPAMENTOS
+// ==========================================
+
+export const getEquipments = async (userId) => {
+  if (!userId) throw new Error("Usuário não autenticado");
+  
+  const { data, error } = await supabase
+    .from('equipamentos')
+    .select('*, clientes(nome)')
+    .eq('user_id', userId)
+    .order('nome', { ascending: true });
+    
+  if (error) throw error;
+  return data;
+};
+
+export const addEquipment = async (userId, equipmentData) => {
+  if (!userId) throw new Error("Usuário não autenticado");
+  
+  const { data, error } = await supabase
+    .from('equipamentos')
+    .insert([{ user_id: userId, ...equipmentData }])
+    .select()
+    .single();
+    
+  if (error) throw error;
+  return data;
+};
+
+export const updateEquipment = async (userId, equipmentId, equipmentData) => {
+  if (!userId) throw new Error("Usuário não autenticado");
+  
+  const { data, error } = await supabase
+    .from('equipamentos')
+    .update(equipmentData)
+    .eq('id', equipmentId)
+    .eq('user_id', userId)
+    .select()
+    .single();
+    
+  if (error) throw error;
+  return data;
+};
+
+export const deleteEquipment = async (userId, equipmentId) => {
+  if (!userId) throw new Error("Usuário não autenticado");
+  
+  const { error } = await supabase
+    .from('equipamentos')
+    .delete()
+    .eq('id', equipmentId)
+    .eq('user_id', userId);
+    
+  if (error) throw error;
+};

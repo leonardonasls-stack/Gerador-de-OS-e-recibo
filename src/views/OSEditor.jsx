@@ -9,13 +9,15 @@ export default function OSEditor({
   onUpdateItem, 
   onOpenClientManager, 
   onOpenProductManager,
+  onOpenEquipmentManager,
   onOpenHistory,
   onSave 
 }) {
   const formatMoney = (num) => num.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   
-  const subtotal = data.items?.reduce((sum, item) => sum + (Number(item.val) * Number(item.qtd)), 0) || 0;
-  const totalFinal = Math.max(0, subtotal - Number(data.desconto || 0));
+  const subtotal = data.items?.reduce((sum, item) => sum + (Number(item.valor) * Number(item.quantidade)), 0) || 0;
+  const valorDesconto = subtotal * (Number(data.desconto || 0) / 100);
+  const totalFinal = Math.max(0, subtotal - valorDesconto);
 
   const handlePrint = () => window.print();
 
@@ -45,11 +47,11 @@ export default function OSEditor({
               >
                 <option value="Aberta">🟢 Aberta</option>
                 <option value="Em Análise">🟡 Em Análise</option>
+                <option value="Aguardando Orçamento">⏳ Aguardando Orçamento</option>
                 <option value="Aprovada">🔵 Aprovada</option>
+                <option value="Aguardando Peça">📦 Aguardando Peça</option>
                 <option value="Em Execução">⚙️ Em Execução</option>
-                <option value="Aguardando Peças">📦 Aguardando Peças</option>
-                <option value="Finalizada">✅ Finalizada</option>
-                <option value="Cancelada">🔴 Cancelada</option>
+                <option value="Concluído">✅ Concluído</option>
               </select>
               <span className="material-symbols-outlined absolute right-1.5 top-1/2 -translate-y-1/2 text-[18px] text-slate-400 pointer-events-none">expand_more</span>
             </div>
@@ -113,7 +115,7 @@ export default function OSEditor({
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-slate-50/50 p-4 rounded border border-slate-100">
               <div className="flex flex-col gap-1">
                 <label className="text-[10px] font-semibold uppercase text-slate-400">CNPJ / CPF</label>
-                <input className="h-8 px-3 rounded bg-white text-slate-900 font-mono text-sm border border-slate-200 focus:outline-none focus:ring-1 focus:ring-sky-500 shadow-sm" value={data.cliente.doc} onChange={(e) => onChange('cliente', 'doc', e.target.value)} placeholder="000.000.000-00" />
+                <input className="h-8 px-3 rounded bg-white text-slate-900 font-mono text-sm border border-slate-200 focus:outline-none focus:ring-1 focus:ring-sky-500 shadow-sm" value={data.cliente.documento} onChange={(e) => onChange('cliente', 'documento', e.target.value)} placeholder="000.000.000-00" />
               </div>
               <div className="flex flex-col gap-1">
                 <label className="text-[10px] font-semibold uppercase text-slate-400">Contato</label>
@@ -123,13 +125,13 @@ export default function OSEditor({
               {/* Endereço - Linha 1 */}
               <div className="flex flex-col gap-1 sm:col-span-2">
                 <label className="text-[10px] font-semibold uppercase text-slate-400">Rua / Logradouro</label>
-                <input className="h-8 px-3 rounded bg-white text-slate-900 text-sm border border-slate-200 focus:outline-none focus:ring-1 focus:ring-sky-500 shadow-sm" value={data.cliente.rua || data.cliente.end} onChange={(e) => onChange('cliente', 'rua', e.target.value)} />
+                <input className="h-8 px-3 rounded bg-white text-slate-900 text-sm border border-slate-200 focus:outline-none focus:ring-1 focus:ring-sky-500 shadow-sm" value={data.cliente.rua} onChange={(e) => onChange('cliente', 'rua', e.target.value)} />
               </div>
 
               {/* Endereço - Linha 2 */}
               <div className="flex flex-col gap-1">
                 <label className="text-[10px] font-semibold uppercase text-slate-400">Número</label>
-                <input className="h-8 px-3 rounded bg-white text-slate-900 text-sm border border-slate-200 focus:outline-none focus:ring-1 focus:ring-sky-500 shadow-sm" value={data.cliente.numero} onChange={(e) => onChange('cliente', 'numero', e.target.value)} />
+                <input className="h-8 px-3 rounded bg-white text-slate-900 text-sm border border-slate-200 focus:outline-none focus:ring-1 focus:ring-sky-500 shadow-sm" value={data.cliente.numero_end} onChange={(e) => onChange('cliente', 'numero_end', e.target.value)} />
               </div>
               <div className="flex flex-col gap-1">
                 <label className="text-[10px] font-semibold uppercase text-slate-400">Complemento</label>
@@ -162,9 +164,23 @@ export default function OSEditor({
                 <h2 className="text-lg text-slate-900 font-bold">Equipamento & Diagnóstico</h2>
               </div>
             </div>
-            <div className="flex flex-col gap-1">
+            <div className="flex flex-col gap-1 relative">
               <label className="text-[10px] font-semibold uppercase text-slate-400">Equipamento / Modelo / Serial</label>
-              <input className="h-9 px-3 rounded bg-slate-50 focus:bg-white text-slate-900 font-semibold text-sm border border-slate-200 focus:outline-none focus:ring-1 focus:ring-sky-500 shadow-sm" value={data.equipamento || ''} onChange={(e) => onUpdateSimple('equipamento', e.target.value)} />
+              <div className="relative w-full">
+                <input 
+                  className="w-full h-9 pl-3 pr-10 rounded bg-slate-50 focus:bg-white text-slate-900 font-semibold text-sm border border-slate-200 focus:outline-none focus:ring-1 focus:ring-sky-500 shadow-sm transition-all" 
+                  value={data.equipamento || ''} 
+                  onChange={(e) => onUpdateSimple('equipamento', e.target.value)} 
+                  placeholder="Selecione ou digite um equipamento..."
+                />
+                <button 
+                  onClick={onOpenEquipmentManager}
+                  className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-9 flex items-center justify-center text-slate-400 hover:text-sky-600 hover:bg-sky-50 rounded transition-colors"
+                  title="Buscar Equipamento Salvo"
+                >
+                  <span className="material-symbols-outlined text-[18px]">search</span>
+                </button>
+              </div>
             </div>
             <div className="flex flex-col gap-1 h-full">
               <label className="text-[10px] font-semibold uppercase text-slate-400">Laudo Técnico / Serviços Executados</label>
@@ -205,18 +221,18 @@ export default function OSEditor({
               </thead>
               <tbody className="text-sm divide-y divide-slate-100">
                 {data.items.map((item, idx) => {
-                  const itemTotal = (Number(item.val) || 0) * (Number(item.qtd) || 0);
+                  const itemTotal = (Number(item.valor) || 0) * (Number(item.quantidade) || 0);
                   const isEven = idx % 2 === 0;
                   return (
                     <tr key={item.id} className={`${isEven ? 'bg-white' : 'bg-slate-50/50'} hover:bg-slate-50 transition-colors`}>
                       <td className="p-2">
-                        <input className="w-full h-8 px-2 rounded bg-transparent focus:bg-white text-slate-900 font-semibold text-sm focus:outline-none focus:ring-1 focus:ring-slate-200" value={item.desc} onChange={(e) => onUpdateItem(item.id, 'desc', e.target.value)} />
+                        <input className="w-full h-8 px-2 rounded bg-transparent focus:bg-white text-slate-900 font-semibold text-sm focus:outline-none focus:ring-1 focus:ring-slate-200" value={item.descricao} onChange={(e) => onUpdateItem(item.id, 'descricao', e.target.value)} />
                       </td>
                       <td className="p-2">
-                        <input className="w-full h-8 text-center rounded bg-transparent focus:bg-white font-mono text-sm focus:outline-none focus:ring-1 focus:ring-slate-200" type="number" min="1" value={item.qtd} onChange={(e) => onUpdateItem(item.id, 'qtd', Number(e.target.value) || 0)} />
+                        <input className="w-full h-8 text-center rounded bg-transparent focus:bg-white font-mono text-sm focus:outline-none focus:ring-1 focus:ring-slate-200" type="number" min="1" value={item.quantidade} onChange={(e) => onUpdateItem(item.id, 'quantidade', Number(e.target.value) || 0)} />
                       </td>
                       <td className="p-2">
-                        <input className="w-full h-8 text-right rounded bg-transparent focus:bg-white font-mono text-sm focus:outline-none focus:ring-1 focus:ring-slate-200" type="number" step="0.01" value={item.val} onChange={(e) => onUpdateItem(item.id, 'val', Number(e.target.value) || 0)} />
+                        <input className="w-full h-8 text-right rounded bg-transparent focus:bg-white font-mono text-sm focus:outline-none focus:ring-1 focus:ring-slate-200" type="number" step="0.01" value={item.valor} onChange={(e) => onUpdateItem(item.id, 'valor', Number(e.target.value) || 0)} />
                       </td>
                       <td className="p-2 text-right font-mono font-semibold text-slate-900">
                         {formatMoney(itemTotal)}
@@ -237,8 +253,8 @@ export default function OSEditor({
             <div className="flex items-center gap-3">
               <label className="font-semibold text-sm text-slate-900">Desconto Concedido:</label>
               <div className="relative w-32 flex items-center">
-                <span className="absolute left-2 text-slate-400 font-mono text-sm">R$</span>
-                <input className="w-full h-8 pl-8 pr-2 text-right rounded bg-white border border-slate-200 text-slate-900 font-mono text-sm focus:outline-none focus:ring-1 focus:ring-sky-500 shadow-sm" type="number" step="0.01" value={data.desconto} onChange={(e) => onUpdateSimple('desconto', Number(e.target.value) || 0)} />
+                <input className="w-full h-8 pl-3 pr-8 text-right rounded bg-white border border-slate-200 text-slate-900 font-mono text-sm focus:outline-none focus:ring-1 focus:ring-sky-500 shadow-sm" type="number" step="0.1" value={data.desconto} onChange={(e) => onUpdateSimple('desconto', Number(e.target.value) || 0)} />
+                <span className="absolute right-3 text-slate-400 font-mono text-sm font-bold">%</span>
               </div>
             </div>
             <div className="flex items-center gap-8 ml-auto">

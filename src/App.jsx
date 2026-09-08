@@ -8,6 +8,7 @@ import Login from './components/Login';
 import CompanySettings from './components/CompanySettings';
 import ClientManager from './components/ClientManager';
 import ProductManager from './components/ProductManager';
+import EquipmentManager from './components/EquipmentManager';
 import OSHistory from './components/OSHistory';
 import { supabase, logout } from './services/supabase';
 import { saveOS, getNextOSNumber } from './services/osService';
@@ -18,16 +19,16 @@ function AppContent() {
   const navigate = useNavigate();
   const [data, setData] = useState({
     empresa: {
-      nome: '', end: '', cnpj: '', fone: '', email: ''
+      nome: '', endereco: '', cnpj: '', telefone: '', email: ''
     },
     os: {
-      numero: '', data: new Date().toLocaleDateString('pt-BR'), status: 'Aberta'
+      numero: '', data: new Date().toISOString().split('T')[0], status: 'Aberta'
     },
-    cliente: { nome: '', doc: '', contato: '', cep: '', rua: '', numero: '', complemento: '', bairro: '', cidade: '', end: '' },
+    cliente: { nome: '', documento: '', contato: '', cep: '', rua: '', numero_end: '', complemento: '', bairro: '', cidade: '' },
     equipamento: '',
     servico: '',
     obsInterna: '',
-    items: [{ id: Date.now(), desc: '', qtd: 1, val: 0.00 }],
+    items: [{ id: Date.now(), descricao: '', quantidade: 1, valor: 0.00 }],
     desconto: 0,
     tecnico: ''
   });
@@ -41,6 +42,7 @@ function AppContent() {
   const [showClientManager, setShowClientManager] = useState(false);
   const [showProductManager, setShowProductManager] = useState(false);
   const [showProductSelector, setShowProductSelector] = useState(false);
+  const [showEquipmentManager, setShowEquipmentManager] = useState(false);
   const [showOSHistory, setShowOSHistory] = useState(false);
   const [forceOnboarding, setForceOnboarding] = useState(false);
   const [deferredPrompt, setDeferredPrompt] = useState(null);
@@ -116,64 +118,54 @@ function AppContent() {
   };
 
   const handleClientSelect = (clientData) => {
-    let parsedData = { ...clientData };
-    
-    // Tenta desmembrar a string de endereço gerada pelo ClientManager
-    if (parsedData.end && !parsedData.rua) {
-      const match = parsedData.end.match(/^(.*?), (.*?)(?: \((.*?)\))? - (.*?) - (.*?) - CEP: (.*?)$/);
-      if (match) {
-        parsedData.rua = match[1] || '';
-        parsedData.numero = match[2] || '';
-        parsedData.complemento = match[3] || '';
-        parsedData.bairro = match[4] || '';
-        parsedData.cidade = match[5] || '';
-        parsedData.cep = match[6] || '';
-      } else {
-        parsedData.rua = parsedData.end;
-      }
-    }
-
     setData(prev => ({
       ...prev,
-      cliente: parsedData
+      cliente: clientData
+    }));
+  };
+
+  const handleEquipmentSelect = (equipString) => {
+    setData(prev => ({
+      ...prev,
+      equipamento: equipString
     }));
   };
 
   const handleProductSelect = (productData) => {
     setData(prev => {
-      // Se o único item da lista for vazio, substitui ele em vez de adicionar outro
-      if (prev.items.length === 1 && prev.items[0].desc === '' && prev.items[0].val === 0) {
+      if (prev.items.length === 1 && prev.items[0].descricao === '' && prev.items[0].valor === 0) {
         return {
           ...prev,
-          items: [{ id: Date.now(), desc: productData.desc, qtd: 1, val: productData.val }]
+          items: [{ id: Date.now(), descricao: productData.nome, quantidade: 1, valor: productData.valor }]
         };
       }
       return {
         ...prev,
         items: [
           ...prev.items,
-          { id: Date.now(), desc: productData.desc, qtd: 1, val: productData.val }
+          { id: Date.now(), descricao: productData.nome, quantidade: 1, valor: productData.valor }
         ]
       };
     });
   };
 
   const handleLoadOS = (osData) => {
-    setData({
+    setData(prev => ({
       ...osData,
+      empresa: prev.empresa, // Preserva a empresa carregada no login
       os: {
         numero: osData.os?.numero || '',
         data: osData.os?.data || '',
         status: osData.os?.status || 'Aberta'
       },
-      cliente: osData.cliente || { nome: '', doc: '', contato: '', cep: '', rua: '', numero: '', complemento: '', bairro: '', cidade: '', end: '' },
+      cliente: osData.cliente || { nome: '', documento: '', contato: '', cep: '', rua: '', numero_end: '', complemento: '', bairro: '', cidade: '' },
       equipamento: osData.equipamento || '',
       servico: osData.servico || '',
       obsInterna: osData.obsInterna || '',
-      items: osData.items?.length > 0 ? osData.items : [{ id: 1, desc: '', qtd: 1, val: 0 }],
+      items: osData.items?.length > 0 ? osData.items : [{ id: 1, descricao: '', quantidade: 1, valor: 0 }],
       desconto: osData.desconto || 0,
       tecnico: osData.tecnico || ''
-    });
+    }));
     toast.success(`OS carregada com sucesso!`);
     navigate('/os/editor');
   };
@@ -183,12 +175,12 @@ function AppContent() {
       const nextOS = await getNextOSNumber(user.id);
       setData(prev => ({
         empresa: prev.empresa, // Keep company data
-        os: { numero: nextOS, data: new Date().toLocaleDateString('pt-BR'), status: 'Aberta' },
-        cliente: { nome: '', doc: '', contato: '', cep: '', rua: '', numero: '', complemento: '', bairro: '', cidade: '', end: '' },
+        os: { numero: nextOS, data: new Date().toISOString().split('T')[0], status: 'Aberta' },
+        cliente: { nome: '', documento: '', contato: '', cep: '', rua: '', numero_end: '', complemento: '', bairro: '', cidade: '' },
         equipamento: '',
         servico: '',
         obsInterna: '',
-        items: [{ id: Date.now(), desc: '', qtd: 1, val: 0.00 }],
+        items: [{ id: Date.now(), descricao: '', quantidade: 1, valor: 0.00 }],
         desconto: 0,
         tecnico: user.user_metadata?.display_name || ''
       }));
@@ -208,7 +200,7 @@ function AppContent() {
   const addItem = () => {
     setData(prev => ({
       ...prev,
-      items: [...prev.items, { id: Date.now(), desc: '', qtd: 1, val: 0 }]
+      items: [...prev.items, { id: Date.now(), descricao: '', quantidade: 1, valor: 0 }]
     }));
   };
 
@@ -288,6 +280,7 @@ function AppContent() {
                 onUpdateItem={updateItem}
                 onOpenClientManager={() => setShowClientManager(true)}
                 onOpenProductManager={() => setShowProductSelector(true)}
+                onOpenEquipmentManager={() => setShowEquipmentManager(true)}
                 onOpenHistory={() => setShowOSHistory(true)}
                 onSave={handleSave}
               />
@@ -311,6 +304,18 @@ function AppContent() {
           <Layout user={user} onLogout={logout}>
             <div className="pt-4 h-[calc(100vh-64px)] w-full">
               <ProductManager 
+                user={user} 
+                onClose={() => {}}
+                isPage={true}
+              />
+            </div>
+          </Layout>
+        } />
+
+        <Route path="/equipamentos" element={
+          <Layout user={user} onLogout={logout}>
+            <div className="pt-4 h-[calc(100vh-64px)] w-full">
+              <EquipmentManager 
                 user={user} 
                 onClose={() => {}}
                 isPage={true}
@@ -377,6 +382,16 @@ function AppContent() {
             user={user} 
             onClose={() => setShowProductSelector(false)}
             onProductSelect={handleProductSelect}
+          />
+        </div>
+      )}
+
+      {showEquipmentManager && (
+        <div className="fixed inset-0 z-[100] bg-black/50">
+          <EquipmentManager 
+            user={user} 
+            onClose={() => setShowEquipmentManager(false)}
+            onEquipmentSelect={handleEquipmentSelect}
           />
         </div>
       )}
