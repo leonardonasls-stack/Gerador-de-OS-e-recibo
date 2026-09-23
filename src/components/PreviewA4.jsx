@@ -89,48 +89,7 @@ export default function PreviewA4() {
           </div>
         </div>
 
-        {/* 4. Equipamento, Defeito Relatado e Laudo Técnico */}
-        {data.os?.tipo_atendimento !== 'Balcão' && (
-          <div className="bg-slate-50 border border-slate-200 rounded p-3 flex flex-col gap-2">
-            <span className="text-[13px] uppercase tracking-wider text-sky-700 flex items-center gap-1.5 font-bold mb-0.5">
-              <span className="material-symbols-outlined text-[15px]">laptop_mac</span>
-              Equipamento & Diagnóstico Técnico
-            </span>
-            
-            <div className="bg-white p-2 rounded border border-slate-200 shadow-sm">
-              <span className="text-slate-500 text-[10px] uppercase">Dispositivo / Equipamento</span>
-              <div className="text-brand-navy font-semibold text-sm">{data.equipamento || '-'}</div>
-            </div>
 
-            <div className="grid grid-cols-2 gap-2">
-              <div className="bg-white p-2 rounded border border-slate-200 shadow-sm flex flex-col gap-0.5">
-                <span className="text-xs text-slate-600 flex items-center gap-1 font-semibold">
-                  <span className="material-symbols-outlined text-[14px] text-rose-500">report_problem</span>
-                  Serviço / Relato
-                </span>
-                <p className="text-xs text-slate-800 leading-snug whitespace-pre-wrap">
-                  {data.servico || '-'}
-                </p>
-              </div>
-              <div className="bg-white p-2 rounded border border-slate-200 shadow-sm flex flex-col gap-0.5">
-                <span className="text-xs text-slate-600 flex items-center gap-1 font-semibold">
-                  <span className="material-symbols-outlined text-[14px] text-sky-600">verified</span>
-                  Observações Técnicas Internas
-                </span>
-                <p className="text-xs text-slate-800 leading-snug whitespace-pre-wrap">
-                  {data.obsInterna || '-'}
-                </p>
-              </div>
-            </div>
-
-            <div className="flex items-center justify-between pt-1.5 mt-1 border-t border-slate-200 text-[10px]">
-              <div className="flex items-center gap-1.5">
-                <span className="text-slate-500">Técnico Responsável:</span>
-                <span className="font-semibold text-slate-800">{data.tecnico || '-'}</span>
-              </div>
-            </div>
-          </div>
-        )}
 
         {/* 5. Tabela de Serviços e Peças */}
         <div className="flex flex-col gap-1 mt-1">

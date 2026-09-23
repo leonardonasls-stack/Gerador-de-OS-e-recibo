@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
-import { X, Search, FileText, CheckCircle, Clock, XCircle } from 'lucide-react';
-import { getOSList } from '../services/osService';
+import { X, Search, FileText, CheckCircle, Clock, Trash2 } from 'lucide-react';
+import { getOSList, deleteOS } from '../services/osService';
 import { useAuth } from '../context/AuthContext';
 import { useOS } from '../context/OSContext';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'react-hot-toast';
 
 export default function OSHistory({ onClose, isPage }) {
   const { user } = useAuth();
@@ -15,6 +16,29 @@ export default function OSHistory({ onClose, isPage }) {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('Todas');
+  const [deletingId, setDeletingId] = useState(null);
+
+  useEffect(() => {
+    loadHistory();
+  }, []);
+
+  const handleDelete = async (os) => {
+    const osNum = os.os?.numero || 'este documento';
+    if (!window.confirm(`Tem certeza que deseja excluir o documento ${osNum}?`)) {
+      return;
+    }
+    setDeletingId(os.id);
+    try {
+      await deleteOS(user.id, os.id);
+      toast.success(`Documento ${osNum} excluído com sucesso!`);
+      setOsList(prev => prev.filter(item => item.id !== os.id));
+    } catch (err) {
+      console.error(err);
+      toast.error("Erro ao excluir o documento.");
+    } finally {
+      setDeletingId(null);
+    }
+  };
 
   useEffect(() => {
     loadHistory();
@@ -55,15 +79,18 @@ export default function OSHistory({ onClose, isPage }) {
   };
 
   const getStatusBadge = (status) => {
-    const s = status || 'Aberta';
+    const s = status || 'Aguardando Aprovação';
     switch (s) {
-      case 'Aberta': return <span className="flex items-center gap-1 text-xs font-medium px-2 py-1 bg-green-100 text-green-800 rounded"><Clock size={12}/> Aberta</span>;
-      case 'Em Análise': return <span className="flex items-center gap-1 text-xs font-medium px-2 py-1 bg-yellow-100 text-yellow-800 rounded"><Clock size={12}/> Em Análise</span>;
-      case 'Aguardando Orçamento': return <span className="flex items-center gap-1 text-xs font-medium px-2 py-1 bg-orange-100 text-orange-800 rounded"><Clock size={12}/> Aguardando Orçamento</span>;
-      case 'Aprovada': return <span className="flex items-center gap-1 text-xs font-medium px-2 py-1 bg-blue-100 text-blue-800 rounded"><CheckCircle size={12}/> Aprovada</span>;
-      case 'Aguardando Peça': return <span className="flex items-center gap-1 text-xs font-medium px-2 py-1 bg-purple-100 text-purple-800 rounded"><Clock size={12}/> Aguardando Peça</span>;
-      case 'Em Execução': return <span className="flex items-center gap-1 text-xs font-medium px-2 py-1 bg-indigo-100 text-indigo-800 rounded"><Clock size={12}/> Em Execução</span>;
-      case 'Concluído': return <span className="flex items-center gap-1 text-xs font-medium px-2 py-1 bg-emerald-100 text-emerald-800 rounded"><CheckCircle size={12}/> Concluído</span>;
+      case 'Aguardando Aprovação': 
+      case 'Aberta':
+      case 'Aguardando Orçamento':
+      case 'Em Análise':
+        return <span className="flex items-center gap-1 text-xs font-medium px-2 py-1 bg-amber-100 text-amber-800 rounded"><Clock size={12}/> Aguardando Aprovação</span>;
+      case 'Aprovado': 
+      case 'Aprovada':
+        return <span className="flex items-center gap-1 text-xs font-medium px-2 py-1 bg-blue-100 text-blue-800 rounded"><CheckCircle size={12}/> Aprovado</span>;
+      case 'Concluído': 
+        return <span className="flex items-center gap-1 text-xs font-medium px-2 py-1 bg-emerald-100 text-emerald-800 rounded"><CheckCircle size={12}/> Concluído</span>;
       default: return <span className="text-xs font-medium px-2 py-1 bg-gray-100 text-gray-800 rounded">{s}</span>;
     }
   };
@@ -132,13 +159,9 @@ export default function OSHistory({ onClose, isPage }) {
             className="border text-sm border-gray-300 rounded px-4 py-2 bg-white focus:ring-[#1a5276] focus:border-[#1a5276] outline-none"
           >
             <option value="Todas">Todos os Status</option>
-            <option value="Aberta">Aberta</option>
-            <option value="Em Análise">Em Análise</option>
-            <option value="Aguardando Orçamento">Aguardando Orçamento</option>
-            <option value="Aprovada">Aprovada</option>
-            <option value="Aguardando Peça">Aguardando Peça</option>
-            <option value="Em Execução">Em Execução</option>
-            <option value="Concluído">Concluído</option>
+            <option value="Aguardando Aprovação">⏳ Aguardando Aprovação</option>
+            <option value="Aprovado">🔵 Aprovado</option>
+            <option value="Concluído">✅ Concluído</option>
           </select>
         </div>
 
@@ -170,7 +193,7 @@ export default function OSHistory({ onClose, isPage }) {
                     <td className="p-3 text-sm truncate max-w-[200px]">{os.cliente?.nome || '-'}</td>
                     <td className="p-3">{getStatusBadge(os.os?.status)}</td>
                     <td className="p-3 font-medium">R$ {calculateTotal(os).toFixed(2).replace('.', ',')}</td>
-                    <td className="p-3 text-center">
+                    <td className="p-3 text-center flex items-center justify-center gap-2">
                       <button 
                         onClick={() => {
                           loadOS(os);
@@ -180,9 +203,17 @@ export default function OSHistory({ onClose, isPage }) {
                             if (onClose) onClose();
                           }
                         }}
-                        className="bg-[#1a5276] text-white text-xs px-3 py-1.5 rounded hover:bg-[#154360]"
+                        className="bg-[#1a5276] text-white text-xs px-3 py-1.5 rounded hover:bg-[#154360] transition-colors"
                       >
                         Abrir
+                      </button>
+                      <button 
+                        onClick={() => handleDelete(os)}
+                        disabled={deletingId === os.id}
+                        className="bg-rose-50 text-rose-600 hover:bg-rose-100 hover:text-rose-700 text-xs p-1.5 rounded transition-colors"
+                        title="Excluir documento"
+                      >
+                        <Trash2 size={16} />
                       </button>
                     </td>
                   </tr>

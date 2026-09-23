@@ -8,7 +8,7 @@ const OSContext = createContext();
 const initialOSData = {
   id: null,
   empresa: { nome: '', endereco: '', cnpj: '', telefone: '', email: '' },
-  os: { numero: '', data: new Date().toISOString().split('T')[0], status: 'Aberta', tipo_atendimento: 'Equipamento' },
+  os: { numero: '', data: new Date().toISOString().split('T')[0], status: 'Aguardando Aprovação', tipo_atendimento: 'Orçamento' },
   cliente: { nome: '', documento: '', contato: '', cep: '', rua: '', numero_end: '', complemento: '', bairro: '', cidade: '' },
   equipamento: '',
   servico: '',
@@ -79,8 +79,8 @@ export function OSProvider({ children }) {
         os: {
           numero: osData.os?.numero || '',
           data: osData.os?.data || '',
-          status: osData.os?.status || 'Aberta',
-          tipo_atendimento: osData.os?.tipo_atendimento || 'Equipamento'
+          status: osData.os?.status || 'Aguardando Aprovação',
+          tipo_atendimento: osData.os?.tipo_atendimento || 'Orçamento'
         },
         cliente: osData.cliente || initialOSData.cliente,
         equipamento: osData.equipamento || '',
@@ -101,7 +101,7 @@ export function OSProvider({ children }) {
         payload: {
           ...initialOSData,
           empresa: data.empresa,
-          os: { numero: nextOS, data: new Date().toISOString().split('T')[0], status: 'Aberta', tipo_atendimento: 'Equipamento' },
+          os: { numero: nextOS, data: new Date().toISOString().split('T')[0], status: 'Aguardando Aprovação', tipo_atendimento: 'Orçamento' },
           tecnico: userName || ''
         }
       });

@@ -8,7 +8,6 @@ import Login from './components/Login';
 import CompanySettings from './components/CompanySettings';
 import ClientManager from './components/ClientManager';
 import ProductManager from './components/ProductManager';
-import EquipmentManager from './components/EquipmentManager';
 import OSHistory from './components/OSHistory';
 import { logout } from './services/supabase';
 import { getCompanyData } from './services/profileService';
@@ -110,14 +109,6 @@ function AppContent() {
           <Layout user={user} onLogout={logout}>
             <div className="pt-4 h-[calc(100vh-64px)] w-full">
               <ProductManager isPage={true} onClose={() => {}} />
-            </div>
-          </Layout>
-        } />
-
-        <Route path="/equipamentos" element={
-          <Layout user={user} onLogout={logout}>
-            <div className="pt-4 h-[calc(100vh-64px)] w-full">
-              <EquipmentManager isPage={true} onClose={() => {}} />
             </div>
           </Layout>
         } />

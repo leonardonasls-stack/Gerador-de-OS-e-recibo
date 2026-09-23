@@ -107,3 +107,17 @@ export const getOSList = async (userId) => {
     };
   });
 };
+
+export const deleteOS = async (userId, osId) => {
+  if (!userId) throw new Error("Usuário não autenticado");
+  if (!osId) throw new Error("ID da OS inválido");
+
+  const { error } = await supabase
+    .from('os')
+    .delete()
+    .eq('id', osId)
+    .eq('user_id', userId);
+
+  if (error) throw error;
+};
+

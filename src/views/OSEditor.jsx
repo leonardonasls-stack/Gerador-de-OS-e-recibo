@@ -3,7 +3,6 @@ import { useAuth } from '../context/AuthContext';
 import { useOS } from '../context/OSContext';
 import ClientManager from '../components/ClientManager';
 import ProductManager from '../components/ProductManager';
-import EquipmentManager from '../components/EquipmentManager';
 import OSHistory from '../components/OSHistory';
 import { generateOSPDF } from '../utils/pdfGenerator';
 import { toast } from 'react-hot-toast';
@@ -15,7 +14,6 @@ export default function OSEditor() {
   // Local Modal States
   const [showClientManager, setShowClientManager] = useState(false);
   const [showProductSelector, setShowProductSelector] = useState(false);
-  const [showEquipmentManager, setShowEquipmentManager] = useState(false);
   const [showOSHistory, setShowOSHistory] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
@@ -124,8 +122,8 @@ export default function OSEditor() {
       <section className="bg-white shadow-sm px-4 sm:px-6 lg:px-8 py-3 flex flex-wrap items-center justify-between gap-4 sticky top-0 z-30 mb-6 border-b border-slate-200 -mx-4 sm:-mx-6 lg:-mx-8 -mt-4 sm:-mt-6 lg:-mt-8">
         <div className="flex items-center gap-4 flex-wrap">
           <div className="flex items-center gap-2">
-            <span className="font-mono text-slate-900 text-lg tracking-tight font-bold">OS {data.os.numero || 'Nova'}</span>
-            <span className="px-2 py-1 rounded bg-slate-100 text-sky-600 text-[10px] uppercase font-bold">Ordem de Serviço</span>
+            <span className="font-mono text-slate-900 text-lg tracking-tight font-bold">Doc #{data.os.numero || 'Novo'}</span>
+            <span className="px-2 py-1 rounded bg-slate-100 text-sky-600 text-[10px] uppercase font-bold">Orçamento / Instalação</span>
           </div>
           <div className="h-4 w-[1px] bg-slate-200 hidden sm:block"></div>
           <div className="flex items-center gap-1 text-slate-400 text-xs">
@@ -134,28 +132,9 @@ export default function OSEditor() {
           </div>
         </div>
         <div className="flex items-center gap-3 flex-wrap">
-          <div className="flex items-center gap-2 bg-slate-50 px-2 py-1 rounded border border-slate-200">
-            <span className="text-xs text-slate-500 hidden sm:inline">Status:</span>
-            <div className="relative">
-              <select 
-                className="bg-white text-slate-900 font-semibold text-xs py-1 pl-2 pr-7 rounded appearance-none focus:outline-none focus:bg-slate-100 cursor-pointer shadow-sm border border-slate-200"
-                value={data.os.status || 'Aberta'}
-                onChange={(e) => onChange('os', 'status', e.target.value)}
-              >
-                <option value="Aberta">🟢 Aberta</option>
-                <option value="Em Análise">🟡 Em Análise</option>
-                <option value="Aguardando Orçamento">⏳ Aguardando Orçamento</option>
-                <option value="Aprovada">🔵 Aprovada</option>
-                <option value="Aguardando Peça">📦 Aguardando Peça</option>
-                <option value="Em Execução">⚙️ Em Execução</option>
-                <option value="Concluído">✅ Concluído</option>
-              </select>
-              <span className="material-symbols-outlined absolute right-1.5 top-1/2 -translate-y-1/2 text-[18px] text-slate-400 pointer-events-none">expand_more</span>
-            </div>
-          </div>
-          <button onClick={() => setShowOSHistory(true)} className="h-8 px-3 rounded bg-amber-100 hover:bg-amber-200 text-amber-700 font-semibold text-xs flex items-center gap-1 shadow-sm transition-colors" title="Buscar OS Existente">
+          <button onClick={() => setShowOSHistory(true)} className="h-8 px-3 rounded bg-amber-100 hover:bg-amber-200 text-amber-700 font-semibold text-xs flex items-center gap-1 shadow-sm transition-colors" title="Buscar Documento Existente">
             <span className="material-symbols-outlined text-[16px]">manage_search</span>
-            <span className="hidden sm:inline">Buscar OS</span>
+            <span className="hidden sm:inline">Buscar Registros</span>
           </button>
           <button onClick={handleShareWhatsApp} className="h-8 px-4 rounded bg-[#25D366] hover:bg-[#1ebe57] text-white font-semibold text-xs flex items-center gap-2 shadow-sm transition-colors">
             <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M12.031 0C5.385 0 0 5.386 0 12.033c0 2.128.552 4.2 1.6 6.02L.05 24l6.141-1.611A11.972 11.972 0 0012.031 24c6.648 0 12.031-5.385 12.031-12.031C24.062 5.386 18.68 0 12.031 0zm0 22.008a9.92 9.92 0 01-5.06-1.378l-.363-.214-3.76 1.002.99-3.666-.234-.374a9.923 9.923 0 01-1.528-5.347c0-5.485 4.464-9.948 9.955-9.948 5.488 0 9.951 4.463 9.951 9.948 0 5.488-4.463 9.95-9.951 9.95zm5.45-7.442c-.298-.15-1.767-.872-2.041-.971-.274-.101-.475-.15-.675.15-.198.297-.773.971-.947 1.171-.174.198-.348.223-.646.074-.298-.15-1.261-.465-2.404-1.484-.888-.792-1.488-1.77-1.662-2.07-.174-.298-.018-.46.131-.609.135-.135.298-.348.447-.524.149-.174.198-.298.298-.498.1-.198.05-.373-.025-.523-.075-.15-.675-1.625-.925-2.223-.243-.585-.488-.506-.675-.515-.174-.01-.373-.01-.572-.01-.198 0-.523.075-.797.373-.274.298-1.045 1.022-1.045 2.49 0 1.468 1.07 2.887 1.22 3.087.15.198 2.1 3.208 5.088 4.498.712.308 1.266.492 1.7.63.714.227 1.365.194 1.875.118.572-.086 1.767-.722 2.016-1.42.249-.697.249-1.295.174-1.42-.075-.124-.274-.198-.572-.348z"/></svg>
@@ -174,35 +153,43 @@ export default function OSEditor() {
         {/* Top Info Card */}
         <div className="bg-white rounded-lg p-4 shadow-sm border border-slate-200 flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded bg-brand-navy text-white flex items-center justify-center text-lg font-bold shadow-sm">OS</div>
+            <div className="w-10 h-10 rounded bg-brand-navy text-white flex items-center justify-center text-lg font-bold shadow-sm">DOC</div>
             <div className="flex flex-col">
               <div className="flex items-center gap-1">
-                <h1 className="text-lg text-slate-900 font-bold">Nova Ordem de Serviço</h1>
+                <h1 className="text-lg text-slate-900 font-bold">Novo Orçamento / Instalação</h1>
               </div>
               <span className="text-[12px] text-slate-400">Preenchimento rápido e emissão simplificada</span>
             </div>
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 w-full md:w-auto">
             <div className="flex flex-col bg-slate-50 p-2 rounded border border-slate-100">
-              <span className="text-[10px] font-semibold uppercase text-slate-400">Nº OS</span>
+              <span className="text-[10px] font-semibold uppercase text-slate-400">Nº DOC</span>
               <input className="bg-transparent font-mono font-semibold text-sm text-slate-900 outline-none w-full" value={data.os.numero} onChange={(e) => onChange('os', 'numero', e.target.value)} />
             </div>
             <div className="flex flex-col bg-slate-50 p-2 rounded border border-slate-100">
               <span className="text-[10px] font-semibold uppercase text-slate-400">Data</span>
               <input className="bg-transparent font-mono font-semibold text-sm text-slate-900 outline-none w-full" value={data.os.data} onChange={(e) => onChange('os', 'data', e.target.value)} />
             </div>
-            <div className="flex flex-col bg-slate-50 p-2 rounded border border-slate-100 col-span-2">
+            <div className="flex flex-col bg-slate-50 p-2 rounded border border-slate-100">
               <span className="text-[10px] font-semibold uppercase text-slate-400">Tipo</span>
-              <select className="bg-transparent font-semibold text-sm text-slate-900 outline-none w-full cursor-pointer" value={data.os.tipo_atendimento || 'Equipamento'} onChange={(e) => onChange('os', 'tipo_atendimento', e.target.value)}>
-                <option value="Equipamento">🛠️ Manutenção (OS)</option>
-                <option value="Balcão">🛒 Venda Balcão</option>
+              <select className="bg-transparent font-semibold text-xs text-slate-900 outline-none w-full cursor-pointer" value={data.os.tipo_atendimento || 'Orçamento'} onChange={(e) => onChange('os', 'tipo_atendimento', e.target.value)}>
                 <option value="Orçamento">📝 Orçamento</option>
+                <option value="Instalação">🔧 Instalação</option>
+                <option value="Balcão">🛒 Venda Balcão</option>
+              </select>
+            </div>
+            <div className="flex flex-col bg-slate-50 p-2 rounded border border-slate-100">
+              <span className="text-[10px] font-semibold uppercase text-slate-400">Status</span>
+              <select className="bg-transparent font-semibold text-xs text-slate-900 outline-none w-full cursor-pointer" value={data.os.status || 'Aguardando Aprovação'} onChange={(e) => onChange('os', 'status', e.target.value)}>
+                <option value="Aguardando Aprovação">⏳ Aguardando Aprovação</option>
+                <option value="Aprovado">🔵 Aprovado</option>
+                <option value="Concluído">✅ Concluído</option>
               </select>
             </div>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 gap-6">
           {/* Section 1: Cliente */}
           <div className="bg-white rounded-lg p-6 shadow-sm border border-slate-200 flex flex-col gap-4">
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
@@ -260,47 +247,13 @@ export default function OSEditor() {
               </div>
             </div>
           </div>
-
-          {/* Section 2: Equipamento e Diagnóstico */}
-          {data.os.tipo_atendimento !== 'Balcão' && (
-            <div className="bg-white rounded-lg p-6 shadow-sm border border-slate-200 flex flex-col gap-4">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-              <div className="flex items-center gap-2">
-                <span className="w-6 h-6 rounded bg-slate-100 text-slate-900 flex items-center justify-center font-mono text-sm font-bold">2</span>
-                <h2 className="text-lg text-slate-900 font-bold">Equipamento & Diagnóstico</h2>
-              </div>
-            </div>
-            <div className="flex flex-col gap-1 relative">
-              <label className="text-[10px] font-semibold uppercase text-slate-400">Equipamento / Modelo / Serial</label>
-              <div className="relative w-full">
-                <input 
-                  className="w-full h-9 pl-3 pr-10 rounded bg-slate-50 focus:bg-white text-slate-900 font-semibold text-sm border border-slate-200 focus:outline-none focus:ring-1 focus:ring-sky-500 shadow-sm transition-all" 
-                  value={data.equipamento || ''} 
-                  onChange={(e) => onUpdateSimple('equipamento', e.target.value)} 
-                  placeholder="Selecione ou digite um equipamento..."
-                />
-                <button 
-                  onClick={() => setShowEquipmentManager(true)}
-                  className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-9 flex items-center justify-center text-slate-400 hover:text-sky-600 hover:bg-sky-50 rounded transition-colors"
-                  title="Buscar Equipamento Salvo"
-                >
-                  <span className="material-symbols-outlined text-[18px]">search</span>
-                </button>
-              </div>
-            </div>
-            <div className="flex flex-col gap-1 h-full">
-              <label className="text-[10px] font-semibold uppercase text-slate-400">Laudo Técnico / Serviços Executados</label>
-              <textarea className="p-3 rounded bg-slate-50 focus:bg-white text-slate-900 text-sm border border-slate-200 focus:outline-none focus:ring-1 focus:ring-sky-500 resize-none shadow-sm h-full min-h-[100px]" value={data.servico || ''} onChange={(e) => onUpdateSimple('servico', e.target.value)} placeholder="Descreva os serviços..."></textarea>
-            </div>
-            </div>
-          )}
         </div>
 
-        {/* Section 3: Itens */}
+        {/* Section 2: Itens */}
         <div className="bg-white rounded-lg p-6 shadow-sm border border-slate-200 flex flex-col gap-4">
           <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-slate-100">
             <div className="flex items-center gap-2">
-              <span className="w-6 h-6 rounded bg-slate-100 text-slate-900 flex items-center justify-center font-mono text-sm font-bold">3</span>
+              <span className="w-6 h-6 rounded bg-slate-100 text-slate-900 flex items-center justify-center font-mono text-sm font-bold">2</span>
               <h2 className="text-lg text-slate-900 font-bold">Peças & Serviços</h2>
             </div>
             <div className="flex items-center gap-2">
@@ -378,10 +331,10 @@ export default function OSEditor() {
           </div>
         </div>
 
-        {/* Section 4: Condições Comerciais */}
+        {/* Section 3: Condições Comerciais */}
         <div className="bg-white rounded-lg p-6 shadow-sm border border-slate-200 flex flex-col gap-4">
           <div className="flex items-center gap-2 pb-3 border-b border-slate-100">
-            <span className="w-6 h-6 rounded bg-slate-100 text-slate-900 flex items-center justify-center font-mono text-sm font-bold">4</span>
+            <span className="w-6 h-6 rounded bg-slate-100 text-slate-900 flex items-center justify-center font-mono text-sm font-bold">3</span>
             <h2 className="text-lg text-slate-900 font-bold">Condições e Assinatura</h2>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -442,18 +395,6 @@ export default function OSEditor() {
         </div>
       )}
 
-      {showEquipmentManager && (
-        <div className="fixed inset-0 z-[100] bg-black/50">
-          <EquipmentManager 
-            user={user} 
-            onClose={() => setShowEquipmentManager(false)}
-            onEquipmentSelect={(equipString) => {
-              dispatch({ type: 'SET_EQUIPAMENTO', payload: equipString });
-              setShowEquipmentManager(false);
-            }}
-          />
-        </div>
-      )}
       
       {showOSHistory && (
         <OSHistory 
