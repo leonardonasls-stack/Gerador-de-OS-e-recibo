@@ -5,6 +5,8 @@ import ClientManager from '../components/ClientManager';
 import ProductManager from '../components/ProductManager';
 import EquipmentManager from '../components/EquipmentManager';
 import OSHistory from '../components/OSHistory';
+import { generateOSPDF } from '../utils/pdfGenerator';
+import { toast } from 'react-hot-toast';
 
 export default function OSEditor() {
   const { user } = useAuth();
@@ -34,6 +36,74 @@ export default function OSEditor() {
   const totalFinal = Math.max(0, subtotal - valorDesconto);
 
   const handlePrint = () => window.print();
+
+  const handleShareWhatsApp = async () => {
+    toast.loading('Gerando PDF...', { id: 'pdf-gen' });
+    try {
+      const { blob, filename } = await generateOSPDF(data.os.numero, data.cliente.nome);
+      const file = new File([blob], filename, { type: 'application/pdf' });
+      
+      let phone = data.cliente?.contato?.replace(/\D/g, '') || '';
+      if (phone && !phone.startsWith('55')) {
+        phone = '55' + phone;
+      }
+      
+      const greeting = `Olá, ${data.cliente?.nome?.split(' ')[0] || 'cliente'}! Segue em anexo o seu orçamento (OS ${data.os?.numero}).`;
+      
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        toast.dismiss('pdf-gen');
+        try {
+          await navigator.share({
+            files: [file],
+            title: filename,
+            text: greeting
+          });
+          toast.success('Compartilhado com sucesso!');
+          return;
+        } catch (err) {
+          console.error('Erro ao compartilhar', err);
+          // Fallback se cancelar ou falhar
+        }
+      }
+
+      // Fallback: Download manual e link
+      toast.success('PDF baixado! Abrindo WhatsApp...', { id: 'pdf-gen' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      a.click();
+      URL.revokeObjectURL(url);
+
+      const encodedMessage = encodeURIComponent(greeting);
+      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+      
+      let waUrl = '';
+      if (isMobile) {
+        waUrl = `https://wa.me/${phone}?text=${encodedMessage}`;
+      } else {
+        waUrl = `https://web.whatsapp.com/send?phone=${phone}&text=${encodedMessage}`;
+      }
+      
+      window.open(waUrl, '_blank');
+    } catch (err) {
+      console.error('Erro ao gerar pdf', err);
+      toast.error('Erro ao gerar PDF', { id: 'pdf-gen' });
+    }
+  };
+
+  const handleSaveOS = async () => {
+    try {
+      const saved = await saveCurrentOS(user?.id);
+      if (saved) {
+        if (window.confirm('OS salva com sucesso! Deseja gerar o PDF e enviar pelo WhatsApp do cliente?')) {
+          await handleShareWhatsApp();
+        }
+      }
+    } catch (err) {
+      console.error('Erro ao salvar ou gerar pdf', err);
+    }
+  };
 
   return (
     <div className="w-full bg-slate-50 min-h-full pb-24 max-w-7xl mx-auto">
@@ -73,6 +143,10 @@ export default function OSEditor() {
           <button onClick={() => setShowOSHistory(true)} className="h-8 px-3 rounded bg-amber-100 hover:bg-amber-200 text-amber-700 font-semibold text-xs flex items-center gap-1 shadow-sm transition-colors" title="Buscar OS Existente">
             <span className="material-symbols-outlined text-[16px]">manage_search</span>
             <span className="hidden sm:inline">Buscar OS</span>
+          </button>
+          <button onClick={handleShareWhatsApp} className="h-8 px-4 rounded bg-[#25D366] hover:bg-[#1ebe57] text-white font-semibold text-xs flex items-center gap-2 shadow-sm transition-colors">
+            <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M12.031 0C5.385 0 0 5.386 0 12.033c0 2.128.552 4.2 1.6 6.02L.05 24l6.141-1.611A11.972 11.972 0 0012.031 24c6.648 0 12.031-5.385 12.031-12.031C24.062 5.386 18.68 0 12.031 0zm0 22.008a9.92 9.92 0 01-5.06-1.378l-.363-.214-3.76 1.002.99-3.666-.234-.374a9.923 9.923 0 01-1.528-5.347c0-5.485 4.464-9.948 9.955-9.948 5.488 0 9.951 4.463 9.951 9.948 0 5.488-4.463 9.95-9.951 9.95zm5.45-7.442c-.298-.15-1.767-.872-2.041-.971-.274-.101-.475-.15-.675.15-.198.297-.773.971-.947 1.171-.174.198-.348.223-.646.074-.298-.15-1.261-.465-2.404-1.484-.888-.792-1.488-1.77-1.662-2.07-.174-.298-.018-.46.131-.609.135-.135.298-.348.447-.524.149-.174.198-.298.298-.498.1-.198.05-.373-.025-.523-.075-.15-.675-1.625-.925-2.223-.243-.585-.488-.506-.675-.515-.174-.01-.373-.01-.572-.01-.198 0-.523.075-.797.373-.274.298-1.045 1.022-1.045 2.49 0 1.468 1.07 2.887 1.22 3.087.15.198 2.1 3.208 5.088 4.498.712.308 1.266.492 1.7.63.714.227 1.365.194 1.875.118.572-.086 1.767-.722 2.016-1.42.249-.697.249-1.295.174-1.42-.075-.124-.274-.198-.572-.348z"/></svg>
+            <span>WhatsApp</span>
           </button>
           <button onClick={handlePrint} className="h-8 px-4 rounded bg-brand-navy hover:bg-[#0a273c] text-white font-semibold text-xs flex items-center gap-2 shadow-sm transition-colors">
             <span className="material-symbols-outlined text-[18px]">visibility</span>
@@ -317,7 +391,7 @@ export default function OSEditor() {
           <button className="h-9 px-3 rounded text-slate-400 hover:text-red-500 hover:bg-slate-50 font-semibold text-sm transition-colors" type="button">Limpar</button>
         </div>
         <div className="flex items-center gap-2">
-          <button onClick={() => saveCurrentOS(user?.id)} className="h-9 px-6 rounded bg-brand-navy hover:bg-[#0a273c] text-white font-semibold text-sm shadow-md transition-colors flex items-center gap-2">
+          <button onClick={handleSaveOS} className="h-9 px-6 rounded bg-brand-navy hover:bg-[#0a273c] text-white font-semibold text-sm shadow-md transition-colors flex items-center gap-2">
             <span className="material-symbols-outlined text-[18px]">check_circle</span>
             <span>Salvar OS</span>
           </button>

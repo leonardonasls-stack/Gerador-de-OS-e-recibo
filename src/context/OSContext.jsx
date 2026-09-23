@@ -113,11 +113,12 @@ export function OSProvider({ children }) {
   const saveCurrentOS = useCallback(async (userId) => {
     if (!userId) {
       toast.error("Faça login para salvar a OS!");
-      return;
+      return false;
     }
     try {
-      await saveOSService(userId, data);
+      const osId = await saveOSService(userId, data);
       toast.success("OS salva com sucesso!");
+      return osId || true;
     } catch (error) {
       console.error(error);
       toast.error("Erro ao salvar a OS.");

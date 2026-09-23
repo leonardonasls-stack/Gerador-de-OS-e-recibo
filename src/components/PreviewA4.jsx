@@ -10,7 +10,7 @@ export default function PreviewA4() {
   const totalGeral = Math.max(0, subtotal - valorDesconto);
 
   return (
-    <div className="w-full max-w-[210mm] min-h-[297mm] mx-auto bg-white text-slate-800 p-6 flex flex-col justify-between relative shadow-2xl print:shadow-none print:m-0 print:w-full print:max-w-none print:p-6">
+    <div id="os-preview-container" className="w-full max-w-[210mm] min-h-[297mm] mx-auto bg-white text-slate-800 p-6 flex flex-col justify-between relative shadow-2xl print:shadow-none print:m-0 print:w-full print:max-w-none print:p-6">
       
       {/* Document Content Stack */}
       <div className="flex flex-col gap-3">
