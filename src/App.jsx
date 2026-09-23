@@ -149,7 +149,7 @@ function AppContent() {
       </Routes>
 
       {/* Hidden print view globally available */}
-      <div className="hidden print:block absolute inset-0 bg-white z-[999]">
+      <div id="print-wrapper" className="hidden print:block absolute inset-0 bg-white z-[999]">
         <PreviewA4 />
       </div>
 

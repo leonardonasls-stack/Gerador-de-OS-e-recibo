@@ -114,7 +114,7 @@ export function OSProvider({ children }) {
   const saveCurrentOS = useCallback(async (userId) => {
     if (!userId) {
       toast.error("Faça login para salvar a OS!");
-      return;
+      return false;
     }
     try {
       const savedId = await saveOSService(userId, data);
@@ -122,7 +122,7 @@ export function OSProvider({ children }) {
         dispatch({ type: 'UPDATE_SIMPLE_FIELD', payload: { field: 'id', value: savedId } });
       }
       toast.success("OS salva com sucesso!");
-      return savedId;
+      return savedId || true;
     } catch (error) {
       console.error(error);
       toast.error("Erro ao salvar a OS.");
