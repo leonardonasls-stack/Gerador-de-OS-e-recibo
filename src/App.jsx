@@ -9,6 +9,7 @@ import CompanySettings from './components/CompanySettings';
 import ClientManager from './components/ClientManager';
 import ProductManager from './components/ProductManager';
 import OSHistory from './components/OSHistory';
+import ResetPassword from './components/ResetPassword';
 import { logout } from './services/supabase';
 import { getCompanyData } from './services/profileService';
 import { Toaster } from 'react-hot-toast';
@@ -16,7 +17,7 @@ import { useAuth } from './context/AuthContext';
 import { useOS } from './context/OSContext';
 
 function AppContent() {
-  const { user, loadingAuth } = useAuth();
+  const { user, loadingAuth, isRecoveringPassword, setIsRecoveringPassword } = useAuth();
   const { data, dispatch, resetToNewOS } = useOS();
   
   const [showCompanySettings, setShowCompanySettings] = useState(false);
@@ -64,6 +65,15 @@ function AppContent() {
 
   if (loadingAuth) {
     return <div className="flex h-screen items-center justify-center bg-[#f0f2f5]">Carregando...</div>;
+  }
+
+  if (isRecoveringPassword) {
+    return (
+      <>
+        <Toaster position="top-right" />
+        <ResetPassword onComplete={() => setIsRecoveringPassword(false)} />
+      </>
+    );
   }
 
   if (!user) {
