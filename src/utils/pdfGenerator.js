@@ -9,21 +9,36 @@ export const generateOSPDF = async (osNumber, clientName) => {
     throw new Error('Elemento da OS não encontrado para gerar o PDF.');
   }
 
-  // Temporarily show the wrapper so dom-to-image can render it
+  // Save original style to restore later
+  const originalStyle = wrapper.style.cssText;
+
+  // Temporarily show the wrapper and force A4 width so mobile devices don't distort it
   wrapper.classList.remove('hidden');
+  wrapper.style.position = 'fixed';
+  wrapper.style.top = '0';
+  wrapper.style.left = '-9999px'; // Hide off-screen
+  wrapper.style.width = '794px'; // A4 width at 96 DPI
+  wrapper.style.height = 'auto';
+  wrapper.style.minHeight = '1123px'; // A4 height at 96 DPI
 
   try {
     const scale = 2; // Improve resolution
+    // Wait a brief moment to ensure browser has reflowed layout
+    await new Promise(resolve => setTimeout(resolve, 50));
+    
+    const targetWidth = element.clientWidth || 794;
+    const targetHeight = element.clientHeight || 1123;
+
     const dataUrl = await domtoimage.toPng(element, {
       quality: 0.98,
       bgcolor: '#ffffff',
-      width: element.clientWidth * scale,
-      height: element.clientHeight * scale,
+      width: targetWidth * scale,
+      height: targetHeight * scale,
       style: {
         transform: `scale(${scale})`,
         transformOrigin: 'top left',
-        width: `${element.clientWidth}px`,
-        height: `${element.clientHeight}px`
+        width: `${targetWidth}px`,
+        height: `${targetHeight}px`
       }
     });
 
@@ -50,6 +65,7 @@ export const generateOSPDF = async (osNumber, clientName) => {
     console.error('Erro ao gerar PDF com dom-to-image:', error);
     throw error;
   } finally {
+    wrapper.style.cssText = originalStyle;
     wrapper.classList.add('hidden');
   }
 };
